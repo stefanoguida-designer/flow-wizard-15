@@ -2,8 +2,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import DepartmentsPage from "./pages/DepartmentsPage";
+import DepartmentDetailPage from "./pages/DepartmentDetailPage";
+import UsersPage from "./pages/UsersPage";
+import ActivityLogsPage from "./pages/ActivityLogsPage";
+import WhitelistingPage from "./pages/WhitelistingPage";
+import AdminManagementPage from "./pages/AdminManagementPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -15,8 +20,13 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/" element={<Navigate to="/departments" replace />} />
+          <Route path="/departments" element={<DepartmentsPage />} />
+          <Route path="/departments/:id" element={<DepartmentDetailPage />} />
+          <Route path="/users" element={<UsersPage />} />
+          <Route path="/activity-logs" element={<ActivityLogsPage />} />
+          <Route path="/whitelisting" element={<WhitelistingPage />} />
+          <Route path="/admin-management" element={<AdminManagementPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
