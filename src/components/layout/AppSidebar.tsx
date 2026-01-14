@@ -1,4 +1,4 @@
-import { Building2, Users, History, ShieldCheck, Settings, ChevronUp, User2, LogOut } from "lucide-react";
+import { Building2, Users, History, ShieldCheck, Settings, ChevronUp, User2, LogOut, ListChecks } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { currentUser } from "@/lib/mockData";
 import {
@@ -26,7 +26,6 @@ const mainNavItems = [
   { title: "Departments", url: "/departments", icon: Building2 },
   { title: "Users", url: "/users", icon: Users },
   { title: "Activity Logs", url: "/activity-logs", icon: History },
-  { title: "Whitelisting", url: "/whitelisting", icon: ShieldCheck },
 ];
 
 export function AppSidebar() {
@@ -40,11 +39,11 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-sidebar-border p-4">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">FM</span>
+            <span className="text-primary-foreground font-bold text-sm">LM</span>
           </div>
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="font-semibold text-sm">Form Management</span>
+              <span className="font-semibold text-sm">Logto Manager</span>
               <span className="text-xs text-muted-foreground">OGCIO Platform</span>
             </div>
           )}
@@ -113,6 +112,12 @@ export function AppSidebar() {
                       <NavLink to="/admin-management" className="flex items-center gap-2 cursor-pointer">
                         <Settings className="h-4 w-4" />
                         <span>Manage Admins</span>
+                      </NavLink>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <NavLink to="/whitelisting" className="flex items-center gap-2 cursor-pointer">
+                        <ListChecks className="h-4 w-4" />
+                        <span>Whitelisting</span>
                       </NavLink>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
