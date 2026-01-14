@@ -36,11 +36,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -59,11 +54,17 @@ import {
   User as UserIcon,
   X
 } from "lucide-react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import { format } from "date-fns";
 
-// Access Tag Component
-function AccessTag({ access, expanded = false }: { access: UserAccess; expanded?: boolean }) {
-  const [isOpen, setIsOpen] = useState(expanded);
+// Access Tag Component - stops propagation to prevent opening the sidebar
+function AccessTag({ access }: { access: UserAccess }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsOpen(!isOpen);
+  };
 
   if (access.fullDepartment) {
     return (
@@ -81,30 +82,31 @@ function AccessTag({ access, expanded = false }: { access: UserAccess; expanded?
     );
   }
 
-  // Multiple units
+  // Multiple units - clickable to expand inline
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger asChild>
-        <Badge 
-          variant="outline" 
-          className="border-primary text-primary cursor-pointer hover:bg-primary/10"
-        >
-          {access.departmentName} ({access.unitIds.length} units)
-          {isOpen ? (
-            <ChevronDown className="h-3 w-3 ml-1" />
-          ) : (
-            <ChevronRight className="h-3 w-3 ml-1" />
-          )}
-        </Badge>
-      </CollapsibleTrigger>
-      <CollapsibleContent className="mt-1 ml-2 space-y-1">
-        {access.unitNames.map((unitName, index) => (
-          <div key={index} className="text-xs text-muted-foreground pl-2 border-l-2 border-primary/30">
-            {unitName}
-          </div>
-        ))}
-      </CollapsibleContent>
-    </Collapsible>
+    <div className="inline-flex flex-col">
+      <Badge 
+        variant="outline" 
+        className="border-primary text-primary cursor-pointer hover:bg-primary/10"
+        onClick={handleToggle}
+      >
+        {access.departmentName} ({access.unitIds.length} units)
+        {isOpen ? (
+          <ChevronDown className="h-3 w-3 ml-1" />
+        ) : (
+          <ChevronRight className="h-3 w-3 ml-1" />
+        )}
+      </Badge>
+      {isOpen && (
+        <div className="mt-1 ml-2 space-y-1">
+          {access.unitNames.map((unitName, index) => (
+            <div key={index} className="text-xs text-muted-foreground pl-2 border-l-2 border-primary/30">
+              {unitName}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -357,8 +359,6 @@ export default function UsersPage() {
   const [unitFilter, setUnitFilter] = useState(searchParams.get("unit") || "all");
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-
   const filteredUsers = useMemo(() => {
     return users.filter(user => {
       // Search filter
@@ -383,19 +383,9 @@ export default function UsersPage() {
         }
       }
 
-      return true;
+    return true;
     });
   }, [searchQuery, departmentFilter, unitFilter]);
-
-  const toggleRowExpand = (userId: string) => {
-    const newExpanded = new Set(expandedRows);
-    if (newExpanded.has(userId)) {
-      newExpanded.delete(userId);
-    } else {
-      newExpanded.add(userId);
-    }
-    setExpandedRows(newExpanded);
-  };
 
   const availableUnits = useMemo(() => {
     if (departmentFilter === "all") return units;
@@ -488,7 +478,6 @@ export default function UsersPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-8"></TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Has Access To</TableHead>
@@ -497,44 +486,28 @@ export default function UsersPage() {
           <TableBody>
             {filteredUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
                   No users found matching your criteria.
                 </TableCell>
               </TableRow>
             ) : (
-              filteredUsers.map((user) => {
-                const isExpanded = expandedRows.has(user.id);
-                const hasMultipleAccess = user.access.length > 1 || user.access.some(a => !a.fullDepartment && a.unitIds.length > 1);
-                
-                return (
-                  <TableRow 
-                    key={user.id} 
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => setSelectedUser(user)}
-                  >
-                    <TableCell onClick={(e) => { e.stopPropagation(); if (hasMultipleAccess) toggleRowExpand(user.id); }}>
-                      {hasMultipleAccess && (
-                        <button className="p-1 hover:bg-muted rounded">
-                          {isExpanded ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
-                        </button>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {user.access.map((access, index) => (
-                          <AccessTag key={index} access={access} expanded={isExpanded} />
-                        ))}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
+              filteredUsers.map((user) => (
+                <TableRow 
+                  key={user.id} 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => setSelectedUser(user)}
+                >
+                  <TableCell className="font-medium">{user.name}</TableCell>
+                  <TableCell className="text-muted-foreground">{user.email}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1 items-start">
+                      {user.access.map((access, index) => (
+                        <AccessTag key={index} access={access} />
+                      ))}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
             )}
           </TableBody>
         </Table>
