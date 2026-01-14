@@ -9,7 +9,7 @@ export function Header() {
             <Clover className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">OGCIO Form Management Platform</h1>
+            <h1 className="text-xl font-bold">Logto Manager</h1>
             <p className="text-sm opacity-80">User Flow Documentation</p>
           </div>
         </div>

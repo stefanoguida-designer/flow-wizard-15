@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { admins, currentUser, type Admin } from "@/lib/mockData";
+import { admins, currentUser, activityLogs, type Admin } from "@/lib/mockData";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,7 +41,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, ShieldCheck, Crown, Shield } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Plus, Trash2, ShieldCheck, Crown, Shield, History, Mail, Calendar, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { Navigate } from "react-router-dom";
 
@@ -51,6 +59,8 @@ export default function AdminManagementPage() {
   const [newAdminName, setNewAdminName] = useState("");
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [newAdminRole, setNewAdminRole] = useState<"admin" | "super_admin">("admin");
+  const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Only super admins can access this page
   if (currentUser.role !== 'super_admin') {
@@ -89,7 +99,21 @@ export default function AdminManagementPage() {
     }
 
     setAdminList(adminList.filter(a => a.id !== admin.id));
+    setSidebarOpen(false);
+    setSelectedAdmin(null);
     toast.success(`Admin "${admin.name}" removed successfully`);
+  };
+
+  const handleRowClick = (admin: Admin) => {
+    setSelectedAdmin(admin);
+    setSidebarOpen(true);
+  };
+
+  const getAdminLogs = (admin: Admin) => {
+    return activityLogs.filter(log => 
+      (log.targetType === 'admin' && log.targetName === admin.name) ||
+      log.performedBy === admin.name
+    ).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   };
 
   return (
@@ -106,7 +130,7 @@ export default function AdminManagementPage() {
             <h3 className="font-medium">Super Admin Access</h3>
             <p className="text-sm text-muted-foreground mt-1">
               As a Super Admin, you can invite other administrators to help manage the platform. 
-              Admins can manage units and users, while Super Admins can also manage other admins.
+              Admins can manage units and users, while Super Admins can also manage other admins and whitelisting.
             </p>
           </div>
         </div>
@@ -175,7 +199,7 @@ export default function AdminManagementPage() {
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    Admins can manage units and users. Super Admins can also manage other administrators.
+                    Admins can manage units and users. Super Admins can also manage other administrators and whitelisting.
                   </p>
                 </div>
               </div>
@@ -203,7 +227,11 @@ export default function AdminManagementPage() {
             </TableHeader>
             <TableBody>
               {adminList.map((admin) => (
-                <TableRow key={admin.id}>
+                <TableRow 
+                  key={admin.id} 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleRowClick(admin)}
+                >
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       {admin.name}
@@ -237,7 +265,12 @@ export default function AdminManagementPage() {
                     {admin.id !== currentUser.id && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-destructive hover:text-destructive"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
@@ -268,6 +301,93 @@ export default function AdminManagementPage() {
           </Table>
         </Card>
       </div>
+
+      {/* Admin Details Sidebar */}
+      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <SheetContent className="w-[400px] sm:w-[500px]">
+          {selectedAdmin && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-2">
+                  {selectedAdmin.name}
+                  {selectedAdmin.id === currentUser.id && (
+                    <Badge variant="outline" className="text-xs">You</Badge>
+                  )}
+                </SheetTitle>
+              </SheetHeader>
+              
+              <Tabs defaultValue="details" className="mt-6">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="details">Details</TabsTrigger>
+                  <TabsTrigger value="activity">Activity</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="details" className="mt-4 space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Email</p>
+                        <p className="text-sm font-medium">{selectedAdmin.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                      {selectedAdmin.role === 'super_admin' ? (
+                        <Crown className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Shield className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <div>
+                        <p className="text-xs text-muted-foreground">Role</p>
+                        <p className="text-sm font-medium">
+                          {selectedAdmin.role === 'super_admin' ? 'Super Admin' : 'Admin'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Added On</p>
+                        <p className="text-sm font-medium">{selectedAdmin.addedAt}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                      <UserPlus className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Added By</p>
+                        <p className="text-sm font-medium">{selectedAdmin.addedBy}</p>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="activity" className="mt-4">
+                  <ScrollArea className="h-[400px]">
+                    <div className="space-y-3">
+                      {getAdminLogs(selectedAdmin).map((log) => (
+                        <div key={log.id} className="flex gap-3 p-3 bg-muted/30 rounded-lg">
+                          <History className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-sm">{log.description}</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {new Date(log.timestamp).toLocaleDateString()} at {new Date(log.timestamp).toLocaleTimeString()}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                      {getAdminLogs(selectedAdmin).length === 0 && (
+                        <p className="text-sm text-muted-foreground text-center py-8">
+                          No activity recorded yet
+                        </p>
+                      )}
+                    </div>
+                  </ScrollArea>
+                </TabsContent>
+              </Tabs>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </AppLayout>
   );
 }
