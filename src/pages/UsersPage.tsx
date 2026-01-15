@@ -136,6 +136,139 @@ function AccessTag({ access }: { access: UserAccess }) {
   );
 }
 
+// Edit User Permissions Modal
+function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClose: () => void; onSave: (user: UserType, access: Map<string, { fullDepartment: boolean; unitIds: Set<string> }>) => void }) {
+  // Initialize with user's current access
+  const initialAccess = new Map<string, { fullDepartment: boolean; unitIds: Set<string> }>();
+  user.access.forEach(a => {
+    initialAccess.set(a.departmentId, {
+      fullDepartment: a.fullDepartment,
+      unitIds: new Set(a.unitIds)
+    });
+  });
+  
+  const [selectedAccess, setSelectedAccess] = useState<Map<string, { fullDepartment: boolean; unitIds: Set<string> }>>(initialAccess);
+
+  const toggleDepartment = (deptId: string, full: boolean) => {
+    const newAccess = new Map(selectedAccess);
+    const current = newAccess.get(deptId);
+    
+    if (full) {
+      if (current?.fullDepartment) {
+        newAccess.delete(deptId);
+      } else {
+        newAccess.set(deptId, { fullDepartment: true, unitIds: new Set() });
+      }
+    }
+    setSelectedAccess(newAccess);
+  };
+
+  const toggleUnit = (deptId: string, unitId: string) => {
+    const newAccess = new Map(selectedAccess);
+    const current = newAccess.get(deptId) || { fullDepartment: false, unitIds: new Set<string>() };
+    
+    const newUnitIds = new Set(current.unitIds);
+    if (newUnitIds.has(unitId)) {
+      newUnitIds.delete(unitId);
+      if (newUnitIds.size === 0) {
+        newAccess.delete(deptId);
+      } else {
+        newAccess.set(deptId, { fullDepartment: false, unitIds: newUnitIds });
+      }
+    } else {
+      newUnitIds.add(unitId);
+      newAccess.set(deptId, { fullDepartment: false, unitIds: newUnitIds });
+    }
+    setSelectedAccess(newAccess);
+  };
+
+  return (
+    <DialogContent className="max-w-2xl max-h-[85vh]">
+      <DialogHeader>
+        <DialogTitle>Edit Permissions</DialogTitle>
+        <DialogDescription>
+          Modify access permissions for {user.name}.
+        </DialogDescription>
+      </DialogHeader>
+      
+      <div className="space-y-6 py-4">
+        <div className="p-3 bg-muted/50 rounded-lg">
+          <div className="font-medium">{user.name}</div>
+          <div className="text-sm text-muted-foreground">{user.email}</div>
+        </div>
+
+        <Separator />
+
+        <div className="space-y-3">
+          <Label>Access Permissions</Label>
+          <p className="text-sm text-muted-foreground">
+            Select which departments and units this user should have access to.
+          </p>
+          
+          <ScrollArea className="h-[300px] rounded-md border p-4">
+            <div className="space-y-4">
+              {departments.map((dept) => {
+                const deptUnits = units.filter(u => u.departmentId === dept.id);
+                const currentAccess = selectedAccess.get(dept.id);
+                const isFullDept = currentAccess?.fullDepartment || false;
+                
+                return (
+                  <div key={dept.id} className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`edit-dept-${dept.id}`}
+                        checked={isFullDept}
+                        onCheckedChange={() => toggleDepartment(dept.id, true)}
+                      />
+                      <label 
+                        htmlFor={`edit-dept-${dept.id}`}
+                        className="text-sm font-medium cursor-pointer flex items-center gap-2"
+                      >
+                        <Building2 className="h-4 w-4 text-primary" />
+                        {dept.name}
+                        <span className="text-xs text-muted-foreground">(full access)</span>
+                      </label>
+                    </div>
+                    
+                    {!isFullDept && deptUnits.length > 0 && (
+                      <div className="ml-6 space-y-1 border-l-2 border-muted pl-4">
+                        {deptUnits.map((unit) => (
+                          <div key={unit.id} className="flex items-center space-x-2">
+                            <Checkbox 
+                              id={`edit-unit-${unit.id}`}
+                              checked={currentAccess?.unitIds.has(unit.id) || false}
+                              onCheckedChange={() => toggleUnit(dept.id, unit.id)}
+                            />
+                            <label 
+                              htmlFor={`edit-unit-${unit.id}`}
+                              className="text-sm cursor-pointer"
+                            >
+                              {unit.name}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </ScrollArea>
+        </div>
+      </div>
+
+      <DialogFooter>
+        <Button variant="outline" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button onClick={() => onSave(user, selectedAccess)} disabled={selectedAccess.size === 0}>
+          Save Changes
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
+
 // Invite User Modal
 function InviteUserModal({ onClose }: { onClose: () => void }) {
   const [email, setEmail] = useState("");
@@ -384,6 +517,8 @@ export default function UsersPage() {
   const [departmentFilter, setDepartmentFilter] = useState(searchParams.get("department") || "all");
   const [unitFilter, setUnitFilter] = useState(searchParams.get("unit") || "all");
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserType | null>(null);
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [userList, setUserList] = useState(users);
 
@@ -423,6 +558,35 @@ export default function UsersPage() {
   const handleDeleteUser = (user: UserType, e: React.MouseEvent) => {
     e.stopPropagation();
     setUserList(userList.filter(u => u.id !== user.id));
+  };
+
+  const handleEditPermissions = (user: UserType, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingUser(user);
+    setIsEditOpen(true);
+  };
+
+  const handleSavePermissions = (user: UserType, accessMap: Map<string, { fullDepartment: boolean; unitIds: Set<string> }>) => {
+    const newAccess: UserAccess[] = [];
+    accessMap.forEach((value, deptId) => {
+      const dept = departments.find(d => d.id === deptId);
+      if (dept) {
+        const unitNames = value.fullDepartment 
+          ? [] 
+          : Array.from(value.unitIds).map(uid => units.find(u => u.id === uid)?.name || '');
+        newAccess.push({
+          departmentId: deptId,
+          departmentName: dept.name,
+          fullDepartment: value.fullDepartment,
+          unitIds: Array.from(value.unitIds),
+          unitNames
+        });
+      }
+    });
+    
+    setUserList(userList.map(u => u.id === user.id ? { ...u, access: newAccess } : u));
+    setIsEditOpen(false);
+    setEditingUser(null);
   };
 
   return (
@@ -550,7 +714,7 @@ export default function UsersPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="bg-popover">
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setSelectedUser(user); }}>
+                        <DropdownMenuItem onClick={(e) => handleEditPermissions(user, e)}>
                           <Pencil className="h-4 w-4 mr-2" />
                           Edit permissions
                         </DropdownMenuItem>
@@ -598,6 +762,17 @@ export default function UsersPage() {
         open={!!selectedUser} 
         onClose={() => setSelectedUser(null)} 
       />
+
+      {/* Edit Permissions Modal */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        {editingUser && (
+          <EditPermissionsModal 
+            user={editingUser} 
+            onClose={() => { setIsEditOpen(false); setEditingUser(null); }} 
+            onSave={handleSavePermissions}
+          />
+        )}
+      </Dialog>
     </AppLayout>
   );
 }

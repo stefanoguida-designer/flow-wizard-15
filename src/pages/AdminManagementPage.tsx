@@ -62,6 +62,9 @@ import { Navigate } from "react-router-dom";
 export default function AdminManagementPage() {
   const [adminList, setAdminList] = useState<Admin[]>(admins);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null);
+  const [editRole, setEditRole] = useState<"admin" | "super_admin">("admin");
   const [newAdminName, setNewAdminName] = useState("");
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [newAdminRole, setNewAdminRole] = useState<"admin" | "super_admin">("admin");
@@ -113,6 +116,21 @@ export default function AdminManagementPage() {
   const handleRowClick = (admin: Admin) => {
     setSelectedAdmin(admin);
     setSidebarOpen(true);
+  };
+
+  const handleEditAdmin = (admin: Admin, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingAdmin(admin);
+    setEditRole(admin.role);
+    setIsEditOpen(true);
+  };
+
+  const handleSaveAdminRole = () => {
+    if (!editingAdmin) return;
+    setAdminList(adminList.map(a => a.id === editingAdmin.id ? { ...a, role: editRole } : a));
+    setIsEditOpen(false);
+    setEditingAdmin(null);
+    toast.success(`Role updated for "${editingAdmin.name}"`);
   };
 
   const getAdminLogs = (admin: Admin) => {
@@ -276,9 +294,9 @@ export default function AdminManagementPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-popover">
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRowClick(admin); }}>
+                          <DropdownMenuItem onClick={(e) => handleEditAdmin(admin, e)}>
                             <Pencil className="h-4 w-4 mr-2" />
-                            Edit admin
+                            Edit role
                           </DropdownMenuItem>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
@@ -406,6 +424,55 @@ export default function AdminManagementPage() {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Edit Admin Role Modal */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Administrator Role</DialogTitle>
+            <DialogDescription>
+              Change the role for {editingAdmin?.name}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <div className="font-medium">{editingAdmin?.name}</div>
+              <div className="text-sm text-muted-foreground">{editingAdmin?.email}</div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-admin-role">Role</Label>
+              <Select value={editRole} onValueChange={(v: "admin" | "super_admin") => setEditRole(v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover">
+                  <SelectItem value="admin">
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-4 w-4" />
+                      <span>Admin</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="super_admin">
+                    <div className="flex items-center gap-2">
+                      <Crown className="h-4 w-4" />
+                      <span>Super Admin</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Admins can manage units and users. Super Admins can also manage other administrators and whitelisting.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveAdminRole}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
