@@ -35,14 +35,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Building2, Users, ChevronRight, Plus, Pencil, Trash2, ExternalLink } from "lucide-react";
+import { Building2, Users, ChevronRight } from "lucide-react";
 
 export default function DepartmentsPage() {
   const navigate = useNavigate();
 
   return (
     <AppLayout
-      breadcrumbs={[{ label: "Departments" }]}
       title="Departments"
     >
       <p className="text-muted-foreground mb-6">
@@ -66,10 +65,18 @@ export default function DepartmentsPage() {
                   <div className="text-sm text-muted-foreground">{dept.abbreviation}</div>
                 </div>
               </div>
-              <div className="flex items-center gap-6">
-                <div className="text-right">
-                  <div className="text-sm font-medium">{dept.unitsCount} units</div>
-                  <div className="text-xs text-muted-foreground">{dept.usersCount} users</div>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="gap-1">
+                    <Users className="h-3 w-3" />
+                    {dept.usersCount} users
+                  </Badge>
+                  {dept.unitsCount > 0 && (
+                    <Badge variant="outline" className="gap-1">
+                      <Building2 className="h-3 w-3" />
+                      {dept.unitsCount} units
+                    </Badge>
+                  )}
                 </div>
                 <ChevronRight className="h-5 w-5 text-muted-foreground" />
               </div>

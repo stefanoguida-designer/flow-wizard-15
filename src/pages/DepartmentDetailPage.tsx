@@ -109,6 +109,7 @@ export default function DepartmentDetailPage() {
         { label: "Departments", href: "/departments" },
         { label: department.name }
       ]}
+      showBreadcrumbs={true}
     >
       <div className="space-y-6">
         {/* Department Header */}

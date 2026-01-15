@@ -47,9 +47,15 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Trash2, ShieldCheck, Crown, Shield, History, Mail, Calendar, UserPlus } from "lucide-react";
+import { Plus, ShieldCheck, Crown, Shield, History, Mail, Calendar, UserPlus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Navigate } from "react-router-dom";
 
@@ -118,7 +124,6 @@ export default function AdminManagementPage() {
 
   return (
     <AppLayout
-      breadcrumbs={[{ label: "Admin Management" }]}
       title="Admin Management"
     >
       <div className="space-y-6">
@@ -218,11 +223,10 @@ export default function AdminManagementPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Added On</TableHead>
                 <TableHead>Added By</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="w-[80px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -232,15 +236,17 @@ export default function AdminManagementPage() {
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => handleRowClick(admin)}
                 >
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      {admin.name}
-                      {admin.id === currentUser.id && (
-                        <Badge variant="outline" className="text-xs">You</Badge>
-                      )}
+                  <TableCell>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{admin.name}</span>
+                        {admin.id === currentUser.id && (
+                          <Badge variant="outline" className="text-xs">You</Badge>
+                        )}
+                      </div>
+                      <div className="text-sm text-muted-foreground">{admin.email}</div>
                     </div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{admin.email}</TableCell>
                   <TableCell>
                     <Badge 
                       variant={admin.role === 'super_admin' ? 'default' : 'secondary'}
@@ -261,38 +267,50 @@ export default function AdminManagementPage() {
                   </TableCell>
                   <TableCell>{admin.addedAt}</TableCell>
                   <TableCell>{admin.addedBy}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell>
                     {admin.id !== currentUser.id && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-destructive hover:text-destructive"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Trash2 className="h-4 w-4" />
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
                           </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Remove Administrator</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to remove "{admin.name}" as an administrator? 
-                              They will no longer have access to manage the platform.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              onClick={() => handleRemoveAdmin(admin)}
-                            >
-                              Remove
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-popover">
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRowClick(admin); }}>
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Edit admin
+                          </DropdownMenuItem>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <DropdownMenuItem 
+                                className="text-destructive focus:text-destructive"
+                                onSelect={(e) => e.preventDefault()}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Remove admin
+                              </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Remove Administrator</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to remove "{admin.name}" as an administrator? 
+                                  They will no longer have access to manage the platform.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  onClick={() => handleRemoveAdmin(admin)}
+                                >
+                                  Remove
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
                   </TableCell>
                 </TableRow>

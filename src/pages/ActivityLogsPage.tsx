@@ -108,7 +108,6 @@ export default function ActivityLogsPage() {
 
   return (
     <AppLayout
-      breadcrumbs={[{ label: "Activity Logs" }]}
       title="Activity Logs"
     >
       <p className="text-muted-foreground mb-6">
