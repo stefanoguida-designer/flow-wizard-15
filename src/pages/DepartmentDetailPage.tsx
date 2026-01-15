@@ -129,35 +129,27 @@ export default function DepartmentDetailPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 gap-4 max-w-md">
-          <Card>
-            <CardContent className="flex items-center gap-3 p-4">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Building2 className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">{units.length}</div>
-                <div className="text-sm text-muted-foreground">Units</div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="flex items-center gap-3 p-4">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Users className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">{department.usersCount}</div>
-                <div className="text-sm text-muted-foreground">Users</div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <Card className="max-w-xs">
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Users className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <Link 
+                to={`/users?department=${department.id}`}
+                className="text-2xl font-bold hover:text-primary transition-colors"
+              >
+                {department.usersCount}
+              </Link>
+              <div className="text-sm text-muted-foreground">Users</div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Units Table */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Units</h2>
+            <h2 className="text-lg font-semibold">Units ({units.length})</h2>
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
               <DialogTrigger asChild>
                 <Button>
