@@ -42,6 +42,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { 
   UserPlus, 
   Search, 
@@ -52,14 +69,23 @@ import {
   Calendar,
   History,
   User as UserIcon,
-  X
+  X,
+  MoreHorizontal,
+  Pencil,
+  Trash2
 } from "lucide-react";
-import type { MouseEvent as ReactMouseEvent } from "react";
 import { format } from "date-fns";
+
+// Get department abbreviation helper
+function getDeptAbbreviation(departmentName: string): string {
+  const dept = departments.find(d => d.name === departmentName);
+  return dept?.abbreviation || departmentName;
+}
 
 // Access Tag Component - stops propagation to prevent opening the sidebar
 function AccessTag({ access }: { access: UserAccess }) {
   const [isOpen, setIsOpen] = useState(false);
+  const abbreviation = getDeptAbbreviation(access.departmentName);
 
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -69,7 +95,7 @@ function AccessTag({ access }: { access: UserAccess }) {
   if (access.fullDepartment) {
     return (
       <Badge className="bg-primary text-primary-foreground">
-        {access.departmentName}
+        {abbreviation}
       </Badge>
     );
   }
@@ -77,7 +103,7 @@ function AccessTag({ access }: { access: UserAccess }) {
   if (access.unitIds.length === 1) {
     return (
       <Badge variant="outline" className="border-primary text-primary">
-        {access.departmentName}/{access.unitNames[0]}
+        {abbreviation}/{access.unitNames[0]}
       </Badge>
     );
   }
@@ -90,7 +116,7 @@ function AccessTag({ access }: { access: UserAccess }) {
         className="border-primary text-primary cursor-pointer hover:bg-primary/10"
         onClick={handleToggle}
       >
-        {access.departmentName} ({access.unitIds.length} units)
+        {abbreviation} ({access.unitIds.length} units)
         {isOpen ? (
           <ChevronDown className="h-3 w-3 ml-1" />
         ) : (
@@ -359,8 +385,10 @@ export default function UsersPage() {
   const [unitFilter, setUnitFilter] = useState(searchParams.get("unit") || "all");
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
+  const [userList, setUserList] = useState(users);
+
   const filteredUsers = useMemo(() => {
-    return users.filter(user => {
+    return userList.filter(user => {
       // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -385,16 +413,20 @@ export default function UsersPage() {
 
     return true;
     });
-  }, [searchQuery, departmentFilter, unitFilter]);
+  }, [searchQuery, departmentFilter, unitFilter, userList]);
 
   const availableUnits = useMemo(() => {
     if (departmentFilter === "all") return units;
     return units.filter(u => u.departmentId === departmentFilter);
   }, [departmentFilter]);
 
+  const handleDeleteUser = (user: UserType, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setUserList(userList.filter(u => u.id !== user.id));
+  };
+
   return (
     <AppLayout
-      breadcrumbs={[{ label: "Users" }]}
       title="Users"
     >
       <p className="text-muted-foreground mb-6">
@@ -479,8 +511,8 @@ export default function UsersPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
               <TableHead>Has Access To</TableHead>
+              <TableHead className="w-[80px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -497,14 +529,61 @@ export default function UsersPage() {
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => setSelectedUser(user)}
                 >
-                  <TableCell className="font-medium">{user.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{user.email}</TableCell>
+                  <TableCell>
+                    <div>
+                      <div className="font-medium">{user.name}</div>
+                      <div className="text-sm text-muted-foreground">{user.email}</div>
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1 items-start">
                       {user.access.map((access, index) => (
                         <AccessTag key={index} access={access} />
                       ))}
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="bg-popover">
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setSelectedUser(user); }}>
+                          <Pencil className="h-4 w-4 mr-2" />
+                          Edit permissions
+                        </DropdownMenuItem>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <DropdownMenuItem 
+                              className="text-destructive focus:text-destructive"
+                              onSelect={(e) => e.preventDefault()}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete user
+                            </DropdownMenuItem>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete User</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete "{user.name}"? This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                onClick={(e) => handleDeleteUser(user, e)}
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))
