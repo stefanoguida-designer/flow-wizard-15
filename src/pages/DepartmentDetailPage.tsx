@@ -137,7 +137,7 @@ export default function DepartmentDetailPage() {
             <div>
               <Link 
                 to={`/users?department=${department.id}`}
-                className="text-2xl font-bold hover:text-primary transition-colors"
+                className="text-2xl font-bold text-green-600 hover:text-green-700 hover:underline transition-colors"
               >
                 {department.usersCount}
               </Link>

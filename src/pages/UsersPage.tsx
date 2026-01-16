@@ -183,29 +183,29 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
   };
 
   return (
-    <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
-      <DialogHeader>
+    <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+      <DialogHeader className="flex-shrink-0">
         <DialogTitle>Edit Permissions</DialogTitle>
         <DialogDescription>
           Modify access permissions for {user.name}.
         </DialogDescription>
       </DialogHeader>
       
-      <div className="space-y-6 py-4">
-        <div className="p-3 bg-muted/50 rounded-lg">
+      <div className="flex-1 overflow-hidden flex flex-col min-h-0 py-4">
+        <div className="p-3 bg-muted/50 rounded-lg flex-shrink-0 mb-4">
           <div className="font-medium">{user.name}</div>
           <div className="text-sm text-muted-foreground">{user.email}</div>
         </div>
 
-        <Separator />
+        <Separator className="flex-shrink-0" />
 
-        <div className="space-y-3">
-          <Label>Access Permissions</Label>
-          <p className="text-sm text-muted-foreground">
+        <div className="flex-1 min-h-0 space-y-3 mt-4">
+          <Label className="flex-shrink-0">Access Permissions</Label>
+          <p className="text-sm text-muted-foreground flex-shrink-0">
             Select which departments and units this user should have access to.
           </p>
           
-          <ScrollArea className="h-[300px] rounded-md border p-4">
+          <ScrollArea className="flex-1 h-[250px] rounded-md border p-4">
             <div className="space-y-4">
               {departments.map((dept) => {
                 const deptUnits = units.filter(u => u.departmentId === dept.id);
@@ -257,7 +257,7 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
         </div>
       </div>
 
-      <DialogFooter>
+      <DialogFooter className="flex-shrink-0 pt-4 border-t">
         <Button variant="outline" onClick={onClose}>
           Cancel
         </Button>
@@ -548,19 +548,22 @@ function UserDetailSheet({
                   <p>No activity logs found</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+              <div className="space-y-3">
                   {logs.map((log) => (
                     <a 
                       key={log.id} 
                       href={`/activity-logs?highlight=${log.id}`}
-                      className="block p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+                      className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors group"
                     >
-                      <p className="text-sm">{log.description}</p>
-                      <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                        <span>{log.performedBy}</span>
-                        <span>•</span>
-                        <span>{format(new Date(log.timestamp), "MMM d, yyyy 'at' h:mm a")}</span>
+                      <div className="flex-1">
+                        <p className="text-sm">{log.description}</p>
+                        <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                          <span>{log.performedBy}</span>
+                          <span>•</span>
+                          <span>{format(new Date(log.timestamp), "MMM d, yyyy 'at' h:mm a")}</span>
+                        </div>
                       </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                     </a>
                   ))}
                 </div>
@@ -583,6 +586,8 @@ export default function UsersPage() {
   const [editingUser, setEditingUser] = useState<UserType | null>(null);
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [userList, setUserList] = useState(users);
+  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
+  const [userToDelete, setUserToDelete] = useState<UserType | null>(null);
 
   const filteredUsers = useMemo(() => {
     return userList.filter(user => {
@@ -620,6 +625,38 @@ export default function UsersPage() {
   const handleDeleteUser = (user: UserType) => {
     setUserList(userList.filter(u => u.id !== user.id));
     setSelectedUser(null);
+    setUserToDelete(null);
+    setSelectedUsers(prev => {
+      const next = new Set(prev);
+      next.delete(user.id);
+      return next;
+    });
+  };
+
+  const handleBulkDelete = () => {
+    setUserList(userList.filter(u => !selectedUsers.has(u.id)));
+    setSelectedUsers(new Set());
+  };
+
+  const toggleUserSelection = (userId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedUsers(prev => {
+      const next = new Set(prev);
+      if (next.has(userId)) {
+        next.delete(userId);
+      } else {
+        next.add(userId);
+      }
+      return next;
+    });
+  };
+
+  const toggleAllUsers = () => {
+    if (selectedUsers.size === filteredUsers.length) {
+      setSelectedUsers(new Set());
+    } else {
+      setSelectedUsers(new Set(filteredUsers.map(u => u.id)));
+    }
   };
 
   const handleEditPermissions = (user: UserType) => {
@@ -660,51 +697,98 @@ export default function UsersPage() {
 
       {/* Filters and Actions */}
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name or email..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
+        {selectedUsers.size > 0 ? (
+          // Bulk Actions Mode
+          <>
+            <div className="flex items-center gap-3 flex-1">
+              <Badge variant="secondary" className="px-3 py-1.5">
+                {selectedUsers.size} selected
+              </Badge>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setSelectedUsers(new Set())}
+              >
+                <X className="h-4 w-4 mr-1" />
+                Clear selection
+              </Button>
+            </div>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Selected
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Users</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete {selectedUsers.size} selected user{selectedUsers.size > 1 ? 's' : ''}? This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={handleBulkDelete}
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </>
+        ) : (
+          // Normal Mode
+          <>
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name or email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
 
-        <Select value={departmentFilter} onValueChange={(v) => { setDepartmentFilter(v); setUnitFilter("all"); }}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Filter by department" />
-          </SelectTrigger>
-          <SelectContent className="bg-popover">
-            <SelectItem value="all">All Departments</SelectItem>
-            {departments.map((dept) => (
-              <SelectItem key={dept.id} value={dept.id}>{dept.abbreviation}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+            <Select value={departmentFilter} onValueChange={(v) => { setDepartmentFilter(v); setUnitFilter("all"); }}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Filter by department" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover">
+                <SelectItem value="all">All Departments</SelectItem>
+                {departments.map((dept) => (
+                  <SelectItem key={dept.id} value={dept.id}>{dept.abbreviation}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-        {departmentFilter !== "all" && (
-          <Select value={unitFilter} onValueChange={setUnitFilter}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Filter by unit" />
-            </SelectTrigger>
-            <SelectContent className="bg-popover">
-              <SelectItem value="all">All Units</SelectItem>
-              {availableUnits.map((unit) => (
-                <SelectItem key={unit.id} value={unit.id}>{unit.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            {departmentFilter !== "all" && (
+              <Select value={unitFilter} onValueChange={setUnitFilter}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Filter by unit" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover">
+                  <SelectItem value="all">All Units</SelectItem>
+                  {availableUnits.map((unit) => (
+                    <SelectItem key={unit.id} value={unit.id}>{unit.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
+              <DialogTrigger asChild>
+                <Button className="ml-auto">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Invite User
+                </Button>
+              </DialogTrigger>
+              <InviteUserModal onClose={() => setIsInviteOpen(false)} />
+            </Dialog>
+          </>
         )}
-
-        <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
-          <DialogTrigger asChild>
-            <Button className="ml-auto">
-              <UserPlus className="h-4 w-4 mr-2" />
-              Invite User
-            </Button>
-          </DialogTrigger>
-          <InviteUserModal onClose={() => setIsInviteOpen(false)} />
-        </Dialog>
       </div>
 
       {/* Active Filters */}
@@ -735,6 +819,12 @@ export default function UsersPage() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[50px]">
+                <Checkbox 
+                  checked={selectedUsers.size === filteredUsers.length && filteredUsers.length > 0}
+                  onCheckedChange={toggleAllUsers}
+                />
+              </TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Has Access To</TableHead>
               <TableHead className="w-[80px]">Actions</TableHead>
@@ -743,7 +833,7 @@ export default function UsersPage() {
           <TableBody>
             {filteredUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
                   No users found matching your criteria.
                 </TableCell>
               </TableRow>
@@ -751,9 +841,15 @@ export default function UsersPage() {
               filteredUsers.map((user) => (
                 <TableRow 
                   key={user.id} 
-                  className="cursor-pointer hover:bg-muted/50"
+                  className={`cursor-pointer hover:bg-muted/50 ${selectedUsers.has(user.id) ? 'bg-muted/30' : ''}`}
                   onClick={() => setSelectedUser(user)}
                 >
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <Checkbox 
+                      checked={selectedUsers.has(user.id)}
+                      onCheckedChange={() => toggleUserSelection(user.id, { stopPropagation: () => {} } as React.MouseEvent)}
+                    />
+                  </TableCell>
                   <TableCell>
                     <div>
                       <div className="font-medium">{user.name}</div>
@@ -788,7 +884,7 @@ export default function UsersPage() {
                           className="text-destructive focus:text-destructive"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDeleteUser(user);
+                            setUserToDelete(user);
                           }}
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
@@ -823,6 +919,27 @@ export default function UsersPage() {
           />
         )}
       </Dialog>
+
+      {/* Delete User Confirmation Dialog */}
+      <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{userToDelete?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => userToDelete && handleDeleteUser(userToDelete)}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
