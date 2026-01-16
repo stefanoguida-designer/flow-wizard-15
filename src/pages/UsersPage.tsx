@@ -414,8 +414,21 @@ function InviteUserModal({ onClose }: { onClose: () => void }) {
 }
 
 // User Detail Sidebar
-function UserDetailSheet({ user, open, onClose }: { user: UserType | null; open: boolean; onClose: () => void }) {
+function UserDetailSheet({ 
+  user, 
+  open, 
+  onClose,
+  onEditPermissions,
+  onDeleteUser
+}: { 
+  user: UserType | null; 
+  open: boolean; 
+  onClose: () => void;
+  onEditPermissions: (user: UserType) => void;
+  onDeleteUser: (user: UserType) => void;
+}) {
   const logs = user ? getUserActivityLogs(user.id) : [];
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   if (!user) return null;
 
@@ -480,6 +493,51 @@ function UserDetailSheet({ user, open, onClose }: { user: UserType | null; open:
                 ))}
               </div>
             </div>
+
+            <Separator />
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => {
+                  onEditPermissions(user);
+                  onClose();
+                }}
+              >
+                <Pencil className="h-4 w-4 mr-2" />
+                Edit Permissions
+              </Button>
+              <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="flex-1">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete User
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete User</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete "{user.name}"? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={() => {
+                        onDeleteUser(user);
+                        onClose();
+                      }}
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </TabsContent>
 
           <TabsContent value="activity" className="mt-4">
@@ -492,14 +550,18 @@ function UserDetailSheet({ user, open, onClose }: { user: UserType | null; open:
               ) : (
                 <div className="space-y-3">
                   {logs.map((log) => (
-                    <div key={log.id} className="p-3 bg-muted/50 rounded-lg">
+                    <a 
+                      key={log.id} 
+                      href={`/activity-logs?highlight=${log.id}`}
+                      className="block p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+                    >
                       <p className="text-sm">{log.description}</p>
                       <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
                         <span>{log.performedBy}</span>
                         <span>•</span>
                         <span>{format(new Date(log.timestamp), "MMM d, yyyy 'at' h:mm a")}</span>
                       </div>
-                    </div>
+                    </a>
                   ))}
                 </div>
               )}
@@ -555,13 +617,12 @@ export default function UsersPage() {
     return units.filter(u => u.departmentId === departmentFilter);
   }, [departmentFilter]);
 
-  const handleDeleteUser = (user: UserType, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDeleteUser = (user: UserType) => {
     setUserList(userList.filter(u => u.id !== user.id));
+    setSelectedUser(null);
   };
 
-  const handleEditPermissions = (user: UserType, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleEditPermissions = (user: UserType) => {
     setEditingUser(user);
     setIsEditOpen(true);
   };
@@ -714,7 +775,7 @@ export default function UsersPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="bg-popover">
-                        <DropdownMenuItem onClick={(e) => handleEditPermissions(user, e)}>
+                        <DropdownMenuItem onClick={() => handleEditPermissions(user)}>
                           <Pencil className="h-4 w-4 mr-2" />
                           Edit permissions
                         </DropdownMenuItem>
@@ -739,7 +800,7 @@ export default function UsersPage() {
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
                               <AlertDialogAction
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                onClick={(e) => handleDeleteUser(user, e)}
+                                onClick={() => handleDeleteUser(user)}
                               >
                                 Delete
                               </AlertDialogAction>
@@ -760,7 +821,9 @@ export default function UsersPage() {
       <UserDetailSheet 
         user={selectedUser} 
         open={!!selectedUser} 
-        onClose={() => setSelectedUser(null)} 
+        onClose={() => setSelectedUser(null)}
+        onEditPermissions={handleEditPermissions}
+        onDeleteUser={handleDeleteUser}
       />
 
       {/* Edit Permissions Modal */}

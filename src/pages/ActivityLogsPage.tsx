@@ -1,10 +1,18 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { activityLogs, type ActivityLog } from "@/lib/mockData";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -23,9 +31,13 @@ import {
   ShieldPlus,
   ShieldMinus,
   KeyRound,
-  History
+  History,
+  CalendarIcon,
+  X
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { DateRange } from "react-day-picker";
+import { cn } from "@/lib/utils";
 
 const actionIcons: Record<ActivityLog['action'], React.ReactNode> = {
   user_invited: <UserPlus className="h-4 w-4" />,
@@ -70,9 +82,28 @@ const actionLabels: Record<ActivityLog['action'], string> = {
 };
 
 export default function ActivityLogsPage() {
+  const [searchParams] = useSearchParams();
+  const highlightLogId = searchParams.get("highlight");
+  
   const [searchQuery, setSearchQuery] = useState("");
-  const [actionFilter, setActionFilter] = useState<string>("all");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [targetFilter, setTargetFilter] = useState<string>("all");
+
+  // Scroll to highlighted log on mount
+  useEffect(() => {
+    if (highlightLogId) {
+      setTimeout(() => {
+        const element = document.getElementById(`log-${highlightLogId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+          element.classList.add("ring-2", "ring-primary", "ring-offset-2");
+          setTimeout(() => {
+            element.classList.remove("ring-2", "ring-primary", "ring-offset-2");
+          }, 3000);
+        }
+      }, 100);
+    }
+  }, [highlightLogId]);
 
   const filteredLogs = useMemo(() => {
     return activityLogs
@@ -89,9 +120,14 @@ export default function ActivityLogsPage() {
           }
         }
 
-        // Action filter
-        if (actionFilter !== "all" && log.action !== actionFilter) {
-          return false;
+        // Date range filter
+        if (dateRange?.from) {
+          const logDate = new Date(log.timestamp);
+          const from = startOfDay(dateRange.from);
+          const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
+          if (!isWithinInterval(logDate, { start: from, end: to })) {
+            return false;
+          }
         }
 
         // Target type filter
@@ -102,9 +138,7 @@ export default function ActivityLogsPage() {
         return true;
       })
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [searchQuery, actionFilter, targetFilter]);
-
-  const uniqueActions = [...new Set(activityLogs.map(l => l.action))];
+  }, [searchQuery, dateRange, targetFilter]);
 
   return (
     <AppLayout
@@ -126,17 +160,49 @@ export default function ActivityLogsPage() {
           />
         </div>
 
-        <Select value={actionFilter} onValueChange={setActionFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by action" />
-          </SelectTrigger>
-          <SelectContent className="bg-popover">
-            <SelectItem value="all">All Actions</SelectItem>
-            {uniqueActions.map((action) => (
-              <SelectItem key={action} value={action}>{actionLabels[action]}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "w-[240px] justify-start text-left font-normal",
+                !dateRange && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {dateRange?.from ? (
+                dateRange.to ? (
+                  <>
+                    {format(dateRange.from, "LLL dd")} - {format(dateRange.to, "LLL dd")}
+                  </>
+                ) : (
+                  format(dateRange.from, "LLL dd, y")
+                )
+              ) : (
+                <span>Select date range</span>
+              )}
+              {dateRange && (
+                <X
+                  className="ml-auto h-4 w-4 hover:text-destructive"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDateRange(undefined);
+                  }}
+                />
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0 bg-popover" align="start">
+            <Calendar
+              initialFocus
+              mode="range"
+              defaultMonth={dateRange?.from}
+              selected={dateRange}
+              onSelect={setDateRange}
+              numberOfMonths={2}
+            />
+          </PopoverContent>
+        </Popover>
 
         <Select value={targetFilter} onValueChange={setTargetFilter}>
           <SelectTrigger className="w-[180px]">
@@ -178,7 +244,10 @@ export default function ActivityLogsPage() {
                       </div>
                     )}
                     
-                    <div className="flex gap-4 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
+                    <div 
+                      id={`log-${log.id}`}
+                      className="flex gap-4 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-all"
+                    >
                       <div className={`p-2 rounded-full h-fit ${actionColors[log.action]}`}>
                         {actionIcons[log.action]}
                       </div>
