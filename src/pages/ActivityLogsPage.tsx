@@ -164,32 +164,22 @@ export default function ActivityLogsPage() {
           <PopoverTrigger asChild>
             <Button
               variant="outline"
-              className={cn(
-                "w-[240px] justify-start text-left font-normal",
-                !dateRange && "text-muted-foreground"
-              )}
+              className="w-[200px] justify-start text-left font-normal"
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
-              {dateRange?.from ? (
-                dateRange.to ? (
-                  <>
-                    {format(dateRange.from, "LLL dd")} - {format(dateRange.to, "LLL dd")}
-                  </>
+              <span className={cn(!dateRange && "text-muted-foreground")}>
+                {dateRange?.from ? (
+                  dateRange.to ? (
+                    <>
+                      {format(dateRange.from, "LLL dd")} - {format(dateRange.to, "LLL dd")}
+                    </>
+                  ) : (
+                    format(dateRange.from, "LLL dd, y")
+                  )
                 ) : (
-                  format(dateRange.from, "LLL dd, y")
-                )
-              ) : (
-                <span>Select date range</span>
-              )}
-              {dateRange && (
-                <X
-                  className="ml-auto h-4 w-4 hover:text-destructive"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setDateRange(undefined);
-                  }}
-                />
-              )}
+                  "Date range"
+                )}
+              </span>
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0 bg-popover" align="start">
@@ -218,6 +208,32 @@ export default function ActivityLogsPage() {
           </SelectContent>
         </Select>
       </div>
+
+      {/* Active Filters */}
+      {(dateRange || targetFilter !== "all") && (
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-sm text-muted-foreground">Active filters:</span>
+          {dateRange && (
+            <Badge variant="secondary" className="gap-1">
+              {dateRange.to 
+                ? `${format(dateRange.from!, "LLL dd")} - ${format(dateRange.to, "LLL dd")}`
+                : format(dateRange.from!, "LLL dd, y")
+              }
+              <button onClick={() => setDateRange(undefined)}>
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          )}
+          {targetFilter !== "all" && (
+            <Badge variant="secondary" className="gap-1">
+              {targetFilter.charAt(0).toUpperCase() + targetFilter.slice(1)}s
+              <button onClick={() => setTargetFilter("all")}>
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          )}
+        </div>
+      )}
 
       {/* Logs Timeline */}
       <Card className="p-6">

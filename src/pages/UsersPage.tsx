@@ -183,7 +183,7 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
   };
 
   return (
-    <DialogContent className="max-w-2xl max-h-[85vh]">
+    <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
       <DialogHeader>
         <DialogTitle>Edit Permissions</DialogTitle>
         <DialogDescription>
@@ -309,7 +309,7 @@ function InviteUserModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <DialogContent className="max-w-2xl max-h-[85vh]">
+    <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
       <DialogHeader>
         <DialogTitle>Invite User</DialogTitle>
         <DialogDescription>
@@ -774,39 +774,26 @@ export default function UsersPage() {
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-popover">
-                        <DropdownMenuItem onClick={() => handleEditPermissions(user)}>
+                      <DropdownMenuContent align="end" className="bg-popover" onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenuItem 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditPermissions(user);
+                          }}
+                        >
                           <Pencil className="h-4 w-4 mr-2" />
                           Edit permissions
                         </DropdownMenuItem>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <DropdownMenuItem 
-                              className="text-destructive focus:text-destructive"
-                              onSelect={(e) => e.preventDefault()}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete user
-                            </DropdownMenuItem>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete User</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete "{user.name}"? This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                onClick={() => handleDeleteUser(user)}
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        <DropdownMenuItem 
+                          className="text-destructive focus:text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteUser(user);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete user
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
