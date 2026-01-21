@@ -138,13 +138,13 @@ function AccessTag({ access }: { access: UserAccess }) {
 
 // Role Badge Component
 function RoleBadge({ role }: { role: UserRole }) {
-  const roleConfig = {
+  const roleConfig: Record<UserRole, { label: string; className: string }> = {
     admin: { label: 'Admin', className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
     editor: { label: 'Editor', className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' },
     viewer: { label: 'Viewer', className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' }
   };
   
-  const config = roleConfig[role];
+  const config = roleConfig[role] || roleConfig.viewer;
   return (
     <Badge variant="secondary" className={config.className}>
       {config.label}
