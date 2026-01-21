@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { users, departments, units, getUserActivityLogs, type User as UserType, type UserAccess, type UserRole } from "@/lib/mockData";
+import { users, departments, units, getUserActivityLogs, type User as UserType, type UserAccess, type UserRole, type UnitRoleAccess } from "@/lib/mockData";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -100,10 +100,10 @@ function AccessTag({ access }: { access: UserAccess }) {
     );
   }
 
-  if (access.unitIds.length === 1) {
+  if (access.unitAccess.length === 1) {
     return (
       <Badge variant="outline" className="border-primary text-primary">
-        {abbreviation}/{access.unitNames[0]}
+        {abbreviation}/{access.unitAccess[0].unitName}
       </Badge>
     );
   }
@@ -116,7 +116,7 @@ function AccessTag({ access }: { access: UserAccess }) {
         className="border-primary text-primary cursor-pointer hover:bg-primary/10"
         onClick={handleToggle}
       >
-        {abbreviation} ({access.unitIds.length} units)
+        {abbreviation} ({access.unitAccess.length} units)
         {isOpen ? (
           <ChevronDown className="h-3 w-3 ml-1" />
         ) : (
@@ -125,9 +125,9 @@ function AccessTag({ access }: { access: UserAccess }) {
       </Badge>
       {isOpen && (
         <div className="mt-1 ml-2 space-y-1">
-          {access.unitNames.map((unitName, index) => (
+          {access.unitAccess.map((ua, index) => (
             <div key={index} className="text-xs text-muted-foreground pl-2 border-l-2 border-primary/30">
-              {unitName}
+              {ua.unitName}
             </div>
           ))}
         </div>
@@ -152,58 +152,76 @@ function RoleBadge({ role }: { role: UserRole }) {
   );
 }
 
+// Type for modal state: tracks per-unit roles
+type ModalAccessState = Map<string, { 
+  fullDepartment: boolean; 
+  fullDepartmentRole?: UserRole;
+  unitRoles: Map<string, UserRole>; // unitId -> role
+}>;
+
 // Edit User Permissions Modal
-function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClose: () => void; onSave: (user: UserType, access: Map<string, { fullDepartment: boolean; unitIds: Set<string>; role: UserRole }>) => void }) {
+function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClose: () => void; onSave: (user: UserType, access: ModalAccessState) => void }) {
   // Initialize with user's current access
-  const initialAccess = new Map<string, { fullDepartment: boolean; unitIds: Set<string>; role: UserRole }>();
+  const initialAccess: ModalAccessState = new Map();
   user.access.forEach(a => {
+    const unitRoles = new Map<string, UserRole>();
+    a.unitAccess.forEach(ua => unitRoles.set(ua.unitId, ua.role));
     initialAccess.set(a.departmentId, {
       fullDepartment: a.fullDepartment,
-      unitIds: new Set(a.unitIds),
-      role: a.role
+      fullDepartmentRole: a.fullDepartmentRole,
+      unitRoles
     });
   });
   
-  const [selectedAccess, setSelectedAccess] = useState<Map<string, { fullDepartment: boolean; unitIds: Set<string>; role: UserRole }>>(initialAccess);
+  const [selectedAccess, setSelectedAccess] = useState<ModalAccessState>(initialAccess);
 
-  const toggleDepartment = (deptId: string, full: boolean) => {
+  const toggleDepartment = (deptId: string) => {
     const newAccess = new Map(selectedAccess);
     const current = newAccess.get(deptId);
     
-    if (full) {
-      if (current?.fullDepartment) {
-        newAccess.delete(deptId);
-      } else {
-        newAccess.set(deptId, { fullDepartment: true, unitIds: new Set(), role: current?.role || 'viewer' });
-      }
+    if (current?.fullDepartment) {
+      newAccess.delete(deptId);
+    } else {
+      newAccess.set(deptId, { fullDepartment: true, fullDepartmentRole: 'viewer', unitRoles: new Map() });
     }
     setSelectedAccess(newAccess);
+  };
+
+  const setDepartmentRole = (deptId: string, role: UserRole) => {
+    const newAccess = new Map(selectedAccess);
+    const current = newAccess.get(deptId);
+    if (current) {
+      newAccess.set(deptId, { ...current, fullDepartmentRole: role });
+      setSelectedAccess(newAccess);
+    }
   };
 
   const toggleUnit = (deptId: string, unitId: string) => {
     const newAccess = new Map(selectedAccess);
-    const current = newAccess.get(deptId) || { fullDepartment: false, unitIds: new Set<string>(), role: 'viewer' as UserRole };
+    const current = newAccess.get(deptId) || { fullDepartment: false, unitRoles: new Map<string, UserRole>() };
     
-    const newUnitIds = new Set(current.unitIds);
-    if (newUnitIds.has(unitId)) {
-      newUnitIds.delete(unitId);
-      if (newUnitIds.size === 0) {
+    const newUnitRoles = new Map(current.unitRoles);
+    if (newUnitRoles.has(unitId)) {
+      newUnitRoles.delete(unitId);
+      if (newUnitRoles.size === 0 && !current.fullDepartment) {
         newAccess.delete(deptId);
       } else {
-        newAccess.set(deptId, { fullDepartment: false, unitIds: newUnitIds, role: current.role });
+        newAccess.set(deptId, { ...current, fullDepartment: false, unitRoles: newUnitRoles });
       }
     } else {
-      newUnitIds.add(unitId);
-      newAccess.set(deptId, { fullDepartment: false, unitIds: newUnitIds, role: current.role });
+      newUnitRoles.set(unitId, 'viewer');
+      newAccess.set(deptId, { ...current, fullDepartment: false, unitRoles: newUnitRoles });
     }
     setSelectedAccess(newAccess);
   };
 
-  const setRole = (deptId: string, role: UserRole) => {
+  const setUnitRole = (deptId: string, unitId: string, role: UserRole) => {
     const newAccess = new Map(selectedAccess);
     const current = newAccess.get(deptId);
     if (current) {
-      newAccess.set(deptId, { ...current, role });
+      const newUnitRoles = new Map(current.unitRoles);
+      newUnitRoles.set(unitId, role);
+      newAccess.set(deptId, { ...current, unitRoles: newUnitRoles });
       setSelectedAccess(newAccess);
     }
   };
@@ -213,7 +231,7 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
       <DialogHeader className="flex-shrink-0">
         <DialogTitle>Edit Permissions</DialogTitle>
         <DialogDescription>
-          Modify access permissions for {user.name}.
+          Modify access permissions for {user.name}. Assign roles per department or unit.
         </DialogDescription>
       </DialogHeader>
       
@@ -228,7 +246,7 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
         <div className="flex-1 min-h-0 space-y-3 mt-4">
           <Label className="flex-shrink-0">Access Permissions</Label>
           <p className="text-sm text-muted-foreground flex-shrink-0">
-            Select which departments and units this user should have access to, and assign a role for each.
+            Select departments/units and assign roles. Each unit can have a different role.
           </p>
           
           <ScrollArea className="flex-1 h-[250px] rounded-md border p-4">
@@ -237,7 +255,6 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
                 const deptUnits = units.filter(u => u.departmentId === dept.id);
                 const currentAccess = selectedAccess.get(dept.id);
                 const isFullDept = currentAccess?.fullDepartment || false;
-                const hasAccess = currentAccess && (currentAccess.fullDepartment || currentAccess.unitIds.size > 0);
                 
                 return (
                   <div key={dept.id} className="space-y-2">
@@ -246,7 +263,7 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
                         <Checkbox 
                           id={`edit-dept-${dept.id}`}
                           checked={isFullDept}
-                          onCheckedChange={() => toggleDepartment(dept.id, true)}
+                          onCheckedChange={() => toggleDepartment(dept.id)}
                         />
                         <label 
                           htmlFor={`edit-dept-${dept.id}`}
@@ -257,8 +274,8 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
                           <span className="text-xs text-muted-foreground">(full access)</span>
                         </label>
                       </div>
-                      {hasAccess && (
-                        <Select value={currentAccess?.role || 'viewer'} onValueChange={(v) => setRole(dept.id, v as UserRole)}>
+                      {isFullDept && (
+                        <Select value={currentAccess?.fullDepartmentRole || 'viewer'} onValueChange={(v) => setDepartmentRole(dept.id, v as UserRole)}>
                           <SelectTrigger className="w-28 h-8">
                             <SelectValue />
                           </SelectTrigger>
@@ -272,22 +289,40 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
                     </div>
                     
                     {!isFullDept && deptUnits.length > 0 && (
-                      <div className="ml-6 space-y-1 border-l-2 border-muted pl-4">
-                        {deptUnits.map((unit) => (
-                          <div key={unit.id} className="flex items-center space-x-2">
-                            <Checkbox 
-                              id={`edit-unit-${unit.id}`}
-                              checked={currentAccess?.unitIds.has(unit.id) || false}
-                              onCheckedChange={() => toggleUnit(dept.id, unit.id)}
-                            />
-                            <label 
-                              htmlFor={`edit-unit-${unit.id}`}
-                              className="text-sm cursor-pointer"
-                            >
-                              {unit.name}
-                            </label>
-                          </div>
-                        ))}
+                      <div className="ml-6 space-y-2 border-l-2 border-muted pl-4">
+                        {deptUnits.map((unit) => {
+                          const unitRole = currentAccess?.unitRoles.get(unit.id);
+                          const isSelected = !!unitRole;
+                          return (
+                            <div key={unit.id} className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <Checkbox 
+                                  id={`edit-unit-${unit.id}`}
+                                  checked={isSelected}
+                                  onCheckedChange={() => toggleUnit(dept.id, unit.id)}
+                                />
+                                <label 
+                                  htmlFor={`edit-unit-${unit.id}`}
+                                  className="text-sm cursor-pointer"
+                                >
+                                  {unit.name}
+                                </label>
+                              </div>
+                              {isSelected && (
+                                <Select value={unitRole} onValueChange={(v) => setUnitRole(dept.id, unit.id, v as UserRole)}>
+                                  <SelectTrigger className="w-24 h-7 text-xs">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="admin">Admin</SelectItem>
+                                    <SelectItem value="editor">Editor</SelectItem>
+                                    <SelectItem value="viewer">Viewer</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -314,46 +349,55 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
 function InviteUserModal({ onClose }: { onClose: () => void }) {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
-  const [selectedAccess, setSelectedAccess] = useState<Map<string, { fullDepartment: boolean; unitIds: Set<string>; role: UserRole }>>(new Map());
+  const [selectedAccess, setSelectedAccess] = useState<ModalAccessState>(new Map());
 
-  const toggleDepartment = (deptId: string, full: boolean) => {
+  const toggleDepartment = (deptId: string) => {
     const newAccess = new Map(selectedAccess);
     const current = newAccess.get(deptId);
     
-    if (full) {
-      if (current?.fullDepartment) {
-        newAccess.delete(deptId);
-      } else {
-        newAccess.set(deptId, { fullDepartment: true, unitIds: new Set(), role: current?.role || 'viewer' });
-      }
+    if (current?.fullDepartment) {
+      newAccess.delete(deptId);
+    } else {
+      newAccess.set(deptId, { fullDepartment: true, fullDepartmentRole: 'viewer', unitRoles: new Map() });
     }
     setSelectedAccess(newAccess);
+  };
+
+  const setDepartmentRole = (deptId: string, role: UserRole) => {
+    const newAccess = new Map(selectedAccess);
+    const current = newAccess.get(deptId);
+    if (current) {
+      newAccess.set(deptId, { ...current, fullDepartmentRole: role });
+      setSelectedAccess(newAccess);
+    }
   };
 
   const toggleUnit = (deptId: string, unitId: string) => {
     const newAccess = new Map(selectedAccess);
-    const current = newAccess.get(deptId) || { fullDepartment: false, unitIds: new Set<string>(), role: 'viewer' as UserRole };
+    const current = newAccess.get(deptId) || { fullDepartment: false, unitRoles: new Map<string, UserRole>() };
     
-    const newUnitIds = new Set(current.unitIds);
-    if (newUnitIds.has(unitId)) {
-      newUnitIds.delete(unitId);
-      if (newUnitIds.size === 0) {
+    const newUnitRoles = new Map(current.unitRoles);
+    if (newUnitRoles.has(unitId)) {
+      newUnitRoles.delete(unitId);
+      if (newUnitRoles.size === 0 && !current.fullDepartment) {
         newAccess.delete(deptId);
       } else {
-        newAccess.set(deptId, { fullDepartment: false, unitIds: newUnitIds, role: current.role });
+        newAccess.set(deptId, { ...current, fullDepartment: false, unitRoles: newUnitRoles });
       }
     } else {
-      newUnitIds.add(unitId);
-      newAccess.set(deptId, { fullDepartment: false, unitIds: newUnitIds, role: current.role });
+      newUnitRoles.set(unitId, 'viewer');
+      newAccess.set(deptId, { ...current, fullDepartment: false, unitRoles: newUnitRoles });
     }
     setSelectedAccess(newAccess);
   };
 
-  const setRole = (deptId: string, role: UserRole) => {
+  const setUnitRole = (deptId: string, unitId: string, role: UserRole) => {
     const newAccess = new Map(selectedAccess);
     const current = newAccess.get(deptId);
     if (current) {
-      newAccess.set(deptId, { ...current, role });
+      const newUnitRoles = new Map(current.unitRoles);
+      newUnitRoles.set(unitId, role);
+      newAccess.set(deptId, { ...current, unitRoles: newUnitRoles });
       setSelectedAccess(newAccess);
     }
   };
@@ -363,7 +407,7 @@ function InviteUserModal({ onClose }: { onClose: () => void }) {
       <DialogHeader>
         <DialogTitle>Invite User</DialogTitle>
         <DialogDescription>
-          Invite a civil servant to access the platform. They will receive an email invitation.
+          Invite a civil servant to access the platform. Assign roles per department or unit.
         </DialogDescription>
       </DialogHeader>
       
@@ -395,7 +439,7 @@ function InviteUserModal({ onClose }: { onClose: () => void }) {
         <div className="flex-1 min-h-0 space-y-3">
           <Label className="flex-shrink-0">Access Permissions</Label>
           <p className="text-sm text-muted-foreground flex-shrink-0">
-            Select which departments and units this user should have access to, and assign a role for each.
+            Select departments/units and assign roles. Each unit can have a different role.
           </p>
           
           <ScrollArea className="h-[250px] rounded-md border p-4">
@@ -404,7 +448,6 @@ function InviteUserModal({ onClose }: { onClose: () => void }) {
                 const deptUnits = units.filter(u => u.departmentId === dept.id);
                 const currentAccess = selectedAccess.get(dept.id);
                 const isFullDept = currentAccess?.fullDepartment || false;
-                const hasAccess = currentAccess && (currentAccess.fullDepartment || currentAccess.unitIds.size > 0);
                 
                 return (
                   <div key={dept.id} className="space-y-2">
@@ -413,7 +456,7 @@ function InviteUserModal({ onClose }: { onClose: () => void }) {
                         <Checkbox 
                           id={`dept-${dept.id}`}
                           checked={isFullDept}
-                          onCheckedChange={() => toggleDepartment(dept.id, true)}
+                          onCheckedChange={() => toggleDepartment(dept.id)}
                         />
                         <label 
                           htmlFor={`dept-${dept.id}`}
@@ -424,8 +467,8 @@ function InviteUserModal({ onClose }: { onClose: () => void }) {
                           <span className="text-xs text-muted-foreground">(full access)</span>
                         </label>
                       </div>
-                      {hasAccess && (
-                        <Select value={currentAccess?.role || 'viewer'} onValueChange={(v) => setRole(dept.id, v as UserRole)}>
+                      {isFullDept && (
+                        <Select value={currentAccess?.fullDepartmentRole || 'viewer'} onValueChange={(v) => setDepartmentRole(dept.id, v as UserRole)}>
                           <SelectTrigger className="w-28 h-8">
                             <SelectValue />
                           </SelectTrigger>
@@ -439,22 +482,40 @@ function InviteUserModal({ onClose }: { onClose: () => void }) {
                     </div>
                     
                     {!isFullDept && deptUnits.length > 0 && (
-                      <div className="ml-6 space-y-1 border-l-2 border-muted pl-4">
-                        {deptUnits.map((unit) => (
-                          <div key={unit.id} className="flex items-center space-x-2">
-                            <Checkbox 
-                              id={`unit-${unit.id}`}
-                              checked={currentAccess?.unitIds.has(unit.id) || false}
-                              onCheckedChange={() => toggleUnit(dept.id, unit.id)}
-                            />
-                            <label 
-                              htmlFor={`unit-${unit.id}`}
-                              className="text-sm cursor-pointer"
-                            >
-                              {unit.name}
-                            </label>
-                          </div>
-                        ))}
+                      <div className="ml-6 space-y-2 border-l-2 border-muted pl-4">
+                        {deptUnits.map((unit) => {
+                          const unitRole = currentAccess?.unitRoles.get(unit.id);
+                          const isSelected = !!unitRole;
+                          return (
+                            <div key={unit.id} className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <Checkbox 
+                                  id={`unit-${unit.id}`}
+                                  checked={isSelected}
+                                  onCheckedChange={() => toggleUnit(dept.id, unit.id)}
+                                />
+                                <label 
+                                  htmlFor={`unit-${unit.id}`}
+                                  className="text-sm cursor-pointer"
+                                >
+                                  {unit.name}
+                                </label>
+                              </div>
+                              {isSelected && (
+                                <Select value={unitRole} onValueChange={(v) => setUnitRole(dept.id, unit.id, v as UserRole)}>
+                                  <SelectTrigger className="w-24 h-7 text-xs">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="admin">Admin</SelectItem>
+                                    <SelectItem value="editor">Editor</SelectItem>
+                                    <SelectItem value="viewer">Viewer</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -545,14 +606,19 @@ function UserDetailSheet({
                           </Badge>
                         )}
                       </div>
-                      <RoleBadge role={access.role} />
+                      {access.fullDepartment && access.fullDepartmentRole && (
+                        <RoleBadge role={access.fullDepartmentRole} />
+                      )}
                     </div>
-                    {!access.fullDepartment && access.unitNames.length > 0 && (
-                      <div className="ml-6 space-y-1">
-                        {access.unitNames.map((unitName, idx) => (
-                          <div key={idx} className="text-sm text-muted-foreground flex items-center gap-2">
-                            <div className="w-1.5 h-1.5 rounded-full bg-primary/50" />
-                            {unitName}
+                    {!access.fullDepartment && access.unitAccess.length > 0 && (
+                      <div className="ml-6 space-y-2">
+                        {access.unitAccess.map((ua, idx) => (
+                          <div key={idx} className="flex items-center justify-between text-sm">
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                              <div className="w-1.5 h-1.5 rounded-full bg-primary/50" />
+                              {ua.unitName}
+                            </div>
+                            <RoleBadge role={ua.role} />
                           </div>
                         ))}
                       </div>
@@ -676,7 +742,7 @@ export default function UsersPage() {
 
       // Unit filter
       if (unitFilter !== "all") {
-        if (!user.access.some(a => a.unitIds.includes(unitFilter))) {
+        if (!user.access.some(a => a.unitAccess.some(ua => ua.unitId === unitFilter))) {
           return false;
         }
       }
@@ -732,21 +798,24 @@ export default function UsersPage() {
     setIsEditOpen(true);
   };
 
-  const handleSavePermissions = (user: UserType, accessMap: Map<string, { fullDepartment: boolean; unitIds: Set<string>; role: UserRole }>) => {
+  const handleSavePermissions = (user: UserType, accessMap: ModalAccessState) => {
     const newAccess: UserAccess[] = [];
     accessMap.forEach((value, deptId) => {
       const dept = departments.find(d => d.id === deptId);
       if (dept) {
-        const unitNames = value.fullDepartment 
-          ? [] 
-          : Array.from(value.unitIds).map(uid => units.find(u => u.id === uid)?.name || '');
+        const unitAccess: UnitRoleAccess[] = [];
+        value.unitRoles.forEach((role, unitId) => {
+          const unit = units.find(u => u.id === unitId);
+          if (unit) {
+            unitAccess.push({ unitId, unitName: unit.name, role });
+          }
+        });
         newAccess.push({
           departmentId: deptId,
           departmentName: dept.name,
           fullDepartment: value.fullDepartment,
-          unitIds: Array.from(value.unitIds),
-          unitNames,
-          role: value.role
+          fullDepartmentRole: value.fullDepartmentRole,
+          unitAccess
         });
       }
     });
