@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { users, departments, units, getUserActivityLogs, type User as UserType, type UserAccess } from "@/lib/mockData";
+import { users, departments, units, getUserActivityLogs, type User as UserType, type UserAccess, type UserRole } from "@/lib/mockData";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -136,18 +136,35 @@ function AccessTag({ access }: { access: UserAccess }) {
   );
 }
 
+// Role Badge Component
+function RoleBadge({ role }: { role: UserRole }) {
+  const roleConfig = {
+    admin: { label: 'Admin', className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
+    editor: { label: 'Editor', className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' },
+    viewer: { label: 'Viewer', className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' }
+  };
+  
+  const config = roleConfig[role];
+  return (
+    <Badge variant="secondary" className={config.className}>
+      {config.label}
+    </Badge>
+  );
+}
+
 // Edit User Permissions Modal
-function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClose: () => void; onSave: (user: UserType, access: Map<string, { fullDepartment: boolean; unitIds: Set<string> }>) => void }) {
+function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClose: () => void; onSave: (user: UserType, access: Map<string, { fullDepartment: boolean; unitIds: Set<string>; role: UserRole }>) => void }) {
   // Initialize with user's current access
-  const initialAccess = new Map<string, { fullDepartment: boolean; unitIds: Set<string> }>();
+  const initialAccess = new Map<string, { fullDepartment: boolean; unitIds: Set<string>; role: UserRole }>();
   user.access.forEach(a => {
     initialAccess.set(a.departmentId, {
       fullDepartment: a.fullDepartment,
-      unitIds: new Set(a.unitIds)
+      unitIds: new Set(a.unitIds),
+      role: a.role
     });
   });
   
-  const [selectedAccess, setSelectedAccess] = useState<Map<string, { fullDepartment: boolean; unitIds: Set<string> }>>(initialAccess);
+  const [selectedAccess, setSelectedAccess] = useState<Map<string, { fullDepartment: boolean; unitIds: Set<string>; role: UserRole }>>(initialAccess);
 
   const toggleDepartment = (deptId: string, full: boolean) => {
     const newAccess = new Map(selectedAccess);
@@ -157,7 +174,7 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
       if (current?.fullDepartment) {
         newAccess.delete(deptId);
       } else {
-        newAccess.set(deptId, { fullDepartment: true, unitIds: new Set() });
+        newAccess.set(deptId, { fullDepartment: true, unitIds: new Set(), role: current?.role || 'viewer' });
       }
     }
     setSelectedAccess(newAccess);
@@ -165,7 +182,7 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
 
   const toggleUnit = (deptId: string, unitId: string) => {
     const newAccess = new Map(selectedAccess);
-    const current = newAccess.get(deptId) || { fullDepartment: false, unitIds: new Set<string>() };
+    const current = newAccess.get(deptId) || { fullDepartment: false, unitIds: new Set<string>(), role: 'viewer' as UserRole };
     
     const newUnitIds = new Set(current.unitIds);
     if (newUnitIds.has(unitId)) {
@@ -173,13 +190,22 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
       if (newUnitIds.size === 0) {
         newAccess.delete(deptId);
       } else {
-        newAccess.set(deptId, { fullDepartment: false, unitIds: newUnitIds });
+        newAccess.set(deptId, { fullDepartment: false, unitIds: newUnitIds, role: current.role });
       }
     } else {
       newUnitIds.add(unitId);
-      newAccess.set(deptId, { fullDepartment: false, unitIds: newUnitIds });
+      newAccess.set(deptId, { fullDepartment: false, unitIds: newUnitIds, role: current.role });
     }
     setSelectedAccess(newAccess);
+  };
+
+  const setRole = (deptId: string, role: UserRole) => {
+    const newAccess = new Map(selectedAccess);
+    const current = newAccess.get(deptId);
+    if (current) {
+      newAccess.set(deptId, { ...current, role });
+      setSelectedAccess(newAccess);
+    }
   };
 
   return (
@@ -202,7 +228,7 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
         <div className="flex-1 min-h-0 space-y-3 mt-4">
           <Label className="flex-shrink-0">Access Permissions</Label>
           <p className="text-sm text-muted-foreground flex-shrink-0">
-            Select which departments and units this user should have access to.
+            Select which departments and units this user should have access to, and assign a role for each.
           </p>
           
           <ScrollArea className="flex-1 h-[250px] rounded-md border p-4">
@@ -211,23 +237,38 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
                 const deptUnits = units.filter(u => u.departmentId === dept.id);
                 const currentAccess = selectedAccess.get(dept.id);
                 const isFullDept = currentAccess?.fullDepartment || false;
+                const hasAccess = currentAccess && (currentAccess.fullDepartment || currentAccess.unitIds.size > 0);
                 
                 return (
                   <div key={dept.id} className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id={`edit-dept-${dept.id}`}
-                        checked={isFullDept}
-                        onCheckedChange={() => toggleDepartment(dept.id, true)}
-                      />
-                      <label 
-                        htmlFor={`edit-dept-${dept.id}`}
-                        className="text-sm font-medium cursor-pointer flex items-center gap-2"
-                      >
-                        <Building2 className="h-4 w-4 text-primary" />
-                        {dept.name}
-                        <span className="text-xs text-muted-foreground">(full access)</span>
-                      </label>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`edit-dept-${dept.id}`}
+                          checked={isFullDept}
+                          onCheckedChange={() => toggleDepartment(dept.id, true)}
+                        />
+                        <label 
+                          htmlFor={`edit-dept-${dept.id}`}
+                          className="text-sm font-medium cursor-pointer flex items-center gap-2"
+                        >
+                          <Building2 className="h-4 w-4 text-primary" />
+                          {dept.name}
+                          <span className="text-xs text-muted-foreground">(full access)</span>
+                        </label>
+                      </div>
+                      {hasAccess && (
+                        <Select value={currentAccess?.role || 'viewer'} onValueChange={(v) => setRole(dept.id, v as UserRole)}>
+                          <SelectTrigger className="w-28 h-8">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="admin">Admin</SelectItem>
+                            <SelectItem value="editor">Editor</SelectItem>
+                            <SelectItem value="viewer">Viewer</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
                     </div>
                     
                     {!isFullDept && deptUnits.length > 0 && (
@@ -273,7 +314,7 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
 function InviteUserModal({ onClose }: { onClose: () => void }) {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
-  const [selectedAccess, setSelectedAccess] = useState<Map<string, { fullDepartment: boolean; unitIds: Set<string> }>>(new Map());
+  const [selectedAccess, setSelectedAccess] = useState<Map<string, { fullDepartment: boolean; unitIds: Set<string>; role: UserRole }>>(new Map());
 
   const toggleDepartment = (deptId: string, full: boolean) => {
     const newAccess = new Map(selectedAccess);
@@ -283,7 +324,7 @@ function InviteUserModal({ onClose }: { onClose: () => void }) {
       if (current?.fullDepartment) {
         newAccess.delete(deptId);
       } else {
-        newAccess.set(deptId, { fullDepartment: true, unitIds: new Set() });
+        newAccess.set(deptId, { fullDepartment: true, unitIds: new Set(), role: current?.role || 'viewer' });
       }
     }
     setSelectedAccess(newAccess);
@@ -291,7 +332,7 @@ function InviteUserModal({ onClose }: { onClose: () => void }) {
 
   const toggleUnit = (deptId: string, unitId: string) => {
     const newAccess = new Map(selectedAccess);
-    const current = newAccess.get(deptId) || { fullDepartment: false, unitIds: new Set<string>() };
+    const current = newAccess.get(deptId) || { fullDepartment: false, unitIds: new Set<string>(), role: 'viewer' as UserRole };
     
     const newUnitIds = new Set(current.unitIds);
     if (newUnitIds.has(unitId)) {
@@ -299,13 +340,22 @@ function InviteUserModal({ onClose }: { onClose: () => void }) {
       if (newUnitIds.size === 0) {
         newAccess.delete(deptId);
       } else {
-        newAccess.set(deptId, { fullDepartment: false, unitIds: newUnitIds });
+        newAccess.set(deptId, { fullDepartment: false, unitIds: newUnitIds, role: current.role });
       }
     } else {
       newUnitIds.add(unitId);
-      newAccess.set(deptId, { fullDepartment: false, unitIds: newUnitIds });
+      newAccess.set(deptId, { fullDepartment: false, unitIds: newUnitIds, role: current.role });
     }
     setSelectedAccess(newAccess);
+  };
+
+  const setRole = (deptId: string, role: UserRole) => {
+    const newAccess = new Map(selectedAccess);
+    const current = newAccess.get(deptId);
+    if (current) {
+      newAccess.set(deptId, { ...current, role });
+      setSelectedAccess(newAccess);
+    }
   };
 
   return (
@@ -317,8 +367,8 @@ function InviteUserModal({ onClose }: { onClose: () => void }) {
         </DialogDescription>
       </DialogHeader>
       
-      <div className="space-y-6 py-4">
-        <div className="grid grid-cols-2 gap-4">
+      <div className="flex-1 overflow-hidden flex flex-col space-y-6 py-4">
+        <div className="grid grid-cols-2 gap-4 flex-shrink-0">
           <div className="space-y-2">
             <Label htmlFor="invite-name">Full Name</Label>
             <Input
@@ -340,37 +390,52 @@ function InviteUserModal({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        <Separator />
+        <Separator className="flex-shrink-0" />
 
-        <div className="space-y-3">
-          <Label>Access Permissions</Label>
-          <p className="text-sm text-muted-foreground">
-            Select which departments and units this user should have access to.
+        <div className="flex-1 min-h-0 space-y-3">
+          <Label className="flex-shrink-0">Access Permissions</Label>
+          <p className="text-sm text-muted-foreground flex-shrink-0">
+            Select which departments and units this user should have access to, and assign a role for each.
           </p>
           
-          <ScrollArea className="h-[300px] rounded-md border p-4">
+          <ScrollArea className="h-[250px] rounded-md border p-4">
             <div className="space-y-4">
               {departments.map((dept) => {
                 const deptUnits = units.filter(u => u.departmentId === dept.id);
                 const currentAccess = selectedAccess.get(dept.id);
                 const isFullDept = currentAccess?.fullDepartment || false;
+                const hasAccess = currentAccess && (currentAccess.fullDepartment || currentAccess.unitIds.size > 0);
                 
                 return (
                   <div key={dept.id} className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id={`dept-${dept.id}`}
-                        checked={isFullDept}
-                        onCheckedChange={() => toggleDepartment(dept.id, true)}
-                      />
-                      <label 
-                        htmlFor={`dept-${dept.id}`}
-                        className="text-sm font-medium cursor-pointer flex items-center gap-2"
-                      >
-                        <Building2 className="h-4 w-4 text-primary" />
-                        {dept.name}
-                        <span className="text-xs text-muted-foreground">(full access)</span>
-                      </label>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`dept-${dept.id}`}
+                          checked={isFullDept}
+                          onCheckedChange={() => toggleDepartment(dept.id, true)}
+                        />
+                        <label 
+                          htmlFor={`dept-${dept.id}`}
+                          className="text-sm font-medium cursor-pointer flex items-center gap-2"
+                        >
+                          <Building2 className="h-4 w-4 text-primary" />
+                          {dept.name}
+                          <span className="text-xs text-muted-foreground">(full access)</span>
+                        </label>
+                      </div>
+                      {hasAccess && (
+                        <Select value={currentAccess?.role || 'viewer'} onValueChange={(v) => setRole(dept.id, v as UserRole)}>
+                          <SelectTrigger className="w-28 h-8">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="admin">Admin</SelectItem>
+                            <SelectItem value="editor">Editor</SelectItem>
+                            <SelectItem value="viewer">Viewer</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
                     </div>
                     
                     {!isFullDept && deptUnits.length > 0 && (
@@ -400,7 +465,7 @@ function InviteUserModal({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
-      <DialogFooter>
+      <DialogFooter className="flex-shrink-0">
         <Button variant="outline" onClick={onClose}>
           Cancel
         </Button>
@@ -470,14 +535,17 @@ function UserDetailSheet({
               <div className="space-y-3">
                 {user.access.map((access, index) => (
                   <div key={index} className="p-3 bg-muted/50 rounded-lg space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-primary" />
-                      <span className="font-medium text-sm">{access.departmentName}</span>
-                      {access.fullDepartment && (
-                        <Badge className="bg-primary text-primary-foreground text-xs">
-                          Full Access
-                        </Badge>
-                      )}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-4 w-4 text-primary" />
+                        <span className="font-medium text-sm">{access.departmentName}</span>
+                        {access.fullDepartment && (
+                          <Badge className="bg-primary text-primary-foreground text-xs">
+                            Full Access
+                          </Badge>
+                        )}
+                      </div>
+                      <RoleBadge role={access.role} />
                     </div>
                     {!access.fullDepartment && access.unitNames.length > 0 && (
                       <div className="ml-6 space-y-1">
@@ -664,7 +732,7 @@ export default function UsersPage() {
     setIsEditOpen(true);
   };
 
-  const handleSavePermissions = (user: UserType, accessMap: Map<string, { fullDepartment: boolean; unitIds: Set<string> }>) => {
+  const handleSavePermissions = (user: UserType, accessMap: Map<string, { fullDepartment: boolean; unitIds: Set<string>; role: UserRole }>) => {
     const newAccess: UserAccess[] = [];
     accessMap.forEach((value, deptId) => {
       const dept = departments.find(d => d.id === deptId);
@@ -677,7 +745,8 @@ export default function UsersPage() {
           departmentName: dept.name,
           fullDepartment: value.fullDepartment,
           unitIds: Array.from(value.unitIds),
-          unitNames
+          unitNames,
+          role: value.role
         });
       }
     });
