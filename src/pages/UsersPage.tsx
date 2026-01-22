@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { users, departments, units, getUserActivityLogs, type User as UserType, type UserAccess, type UserRole, type UnitRoleAccess } from "@/lib/mockData";
+import { users, departments, units, getUserActivityLogs, whitelistedDomains, admins, type User as UserType, type UserAccess, type UserRole, type UnitRoleAccess } from "@/lib/mockData";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,6 +59,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { 
   UserPlus, 
   Search, 
@@ -72,7 +73,10 @@ import {
   X,
   MoreHorizontal,
   Pencil,
-  Trash2
+  Trash2,
+  AlertTriangle,
+  ShieldAlert,
+  ExternalLink
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -345,11 +349,52 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
   );
 }
 
-// Invite User Modal
-function InviteUserModal({ onClose }: { onClose: () => void }) {
+// Invite User Modal with validation
+function InviteUserModal({ onClose, onSave, existingUsers }: { 
+  onClose: () => void; 
+  onSave: (name: string, email: string, access: ModalAccessState) => void;
+  existingUsers: UserType[];
+}) {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [selectedAccess, setSelectedAccess] = useState<ModalAccessState>(new Map());
+
+  // Extract domain from email
+  const emailDomain = useMemo(() => {
+    if (!email.includes('@')) return null;
+    return email.split('@')[1]?.toLowerCase();
+  }, [email]);
+
+  // Check if domain is whitelisted
+  const whitelistMatch = useMemo(() => {
+    if (!emailDomain) return null;
+    return whitelistedDomains.find(d => 
+      emailDomain === d.domain.toLowerCase() || emailDomain.endsWith('.' + d.domain.toLowerCase())
+    );
+  }, [emailDomain]);
+
+  // Check if email belongs to an admin/super-admin
+  const isAdminEmail = useMemo(() => {
+    if (!email) return null;
+    return admins.find(a => a.email.toLowerCase() === email.toLowerCase());
+  }, [email]);
+
+  // Check if user already exists
+  const existingUser = useMemo(() => {
+    if (!email) return null;
+    return existingUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+  }, [email, existingUsers]);
+
+  // Get allowed departments based on whitelisted domain
+  const allowedDepartments = useMemo(() => {
+    if (!whitelistMatch) return [];
+    return departments.filter(d => whitelistMatch.departmentIds.includes(d.id));
+  }, [whitelistMatch]);
+
+  // Validation state
+  const hasValidEmail = email.includes('@') && emailDomain;
+  const hasError = hasValidEmail && (!whitelistMatch || isAdminEmail || existingUser);
+  const canShowAccessPanel = hasValidEmail && whitelistMatch && !isAdminEmail && !existingUser;
 
   const toggleDepartment = (deptId: string) => {
     const newAccess = new Map(selectedAccess);
@@ -402,6 +447,11 @@ function InviteUserModal({ onClose }: { onClose: () => void }) {
     }
   };
 
+  const handleSave = () => {
+    if (!name || !email || selectedAccess.size === 0 || hasError) return;
+    onSave(name, email, selectedAccess);
+  };
+
   return (
     <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
       <DialogHeader>
@@ -411,7 +461,7 @@ function InviteUserModal({ onClose }: { onClose: () => void }) {
         </DialogDescription>
       </DialogHeader>
       
-      <div className="flex-1 overflow-hidden flex flex-col space-y-6 py-4">
+      <div className="flex-1 overflow-hidden flex flex-col space-y-4 py-4">
         <div className="grid grid-cols-2 gap-4 flex-shrink-0">
           <div className="space-y-2">
             <Label htmlFor="invite-name">Full Name</Label>
@@ -429,108 +479,188 @@ function InviteUserModal({ onClose }: { onClose: () => void }) {
               type="email"
               placeholder="e.g., john.obrien@gov.ie"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setSelectedAccess(new Map()); // Reset access when email changes
+              }}
+              className={hasError ? "border-destructive" : ""}
             />
           </div>
         </div>
 
-        <Separator className="flex-shrink-0" />
+        {/* Error States */}
+        {hasValidEmail && !whitelistMatch && (
+          <Alert variant="destructive" className="flex-shrink-0">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Domain Not Whitelisted</AlertTitle>
+            <AlertDescription className="flex items-start justify-between gap-4">
+              <span>
+                The domain "@{emailDomain}" is not in the whitelist. Only users from whitelisted domains can be invited.
+              </span>
+              <Button variant="outline" size="sm" className="shrink-0" asChild>
+                <a href="/whitelisting">
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  Manage Whitelist
+                </a>
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
 
-        <div className="flex-1 min-h-0 space-y-3">
-          <Label className="flex-shrink-0">Access Permissions</Label>
-          <p className="text-sm text-muted-foreground flex-shrink-0">
-            Select departments/units and assign roles. Each unit can have a different role.
-          </p>
-          
-          <ScrollArea className="h-[250px] rounded-md border p-4">
-            <div className="space-y-4">
-              {departments.map((dept) => {
-                const deptUnits = units.filter(u => u.departmentId === dept.id);
-                const currentAccess = selectedAccess.get(dept.id);
-                const isFullDept = currentAccess?.fullDepartment || false;
-                
-                return (
-                  <div key={dept.id} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`dept-${dept.id}`}
-                          checked={isFullDept}
-                          onCheckedChange={() => toggleDepartment(dept.id)}
-                        />
-                        <label 
-                          htmlFor={`dept-${dept.id}`}
-                          className="text-sm font-medium cursor-pointer flex items-center gap-2"
-                        >
-                          <Building2 className="h-4 w-4 text-primary" />
-                          {dept.name}
-                          <span className="text-xs text-muted-foreground">(full access)</span>
-                        </label>
-                      </div>
-                      {isFullDept && (
-                        <Select value={currentAccess?.fullDepartmentRole || 'viewer'} onValueChange={(v) => setDepartmentRole(dept.id, v as UserRole)}>
-                          <SelectTrigger className="w-28 h-8">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="admin">Admin</SelectItem>
-                            <SelectItem value="editor">Editor</SelectItem>
-                            <SelectItem value="viewer">Viewer</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                    </div>
+        {isAdminEmail && (
+          <Alert variant="destructive" className="flex-shrink-0">
+            <ShieldAlert className="h-4 w-4" />
+            <AlertTitle>Security Restriction</AlertTitle>
+            <AlertDescription className="flex items-start justify-between gap-4">
+              <span>
+                This email belongs to {isAdminEmail.role === 'super_admin' ? 'a Super Admin' : isAdminEmail.role === 'read_only' ? 'a Read Only admin' : 'an Admin'} ({isAdminEmail.name}). 
+                Platform administrators cannot be added as users to prevent unauthorized access escalation.
+              </span>
+              <Button variant="outline" size="sm" className="shrink-0" asChild>
+                <a href="/admin-management">
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  View Admins
+                </a>
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {existingUser && !isAdminEmail && (
+          <Alert variant="destructive" className="flex-shrink-0">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>User Already Exists</AlertTitle>
+            <AlertDescription>
+              A user with this email ({existingUser.name}) already exists. You can edit their permissions instead.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Access Panel - Only visible when email is valid and whitelisted */}
+        {canShowAccessPanel && (
+          <>
+            <Separator className="flex-shrink-0" />
+
+            <div className="flex-1 min-h-0 space-y-3">
+              <div className="flex items-center justify-between flex-shrink-0">
+                <Label>Access Permissions</Label>
+                <Badge variant="outline" className="text-xs">
+                  Domain: @{emailDomain} → {allowedDepartments.length} department{allowedDepartments.length !== 1 ? 's' : ''} available
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground flex-shrink-0">
+                Select departments/units and assign roles. Only departments associated with this domain are shown.
+              </p>
+              
+              <ScrollArea className="h-[200px] rounded-md border p-4">
+                <div className="space-y-4">
+                  {allowedDepartments.map((dept) => {
+                    const deptUnits = units.filter(u => u.departmentId === dept.id);
+                    const currentAccess = selectedAccess.get(dept.id);
+                    const isFullDept = currentAccess?.fullDepartment || false;
                     
-                    {!isFullDept && deptUnits.length > 0 && (
-                      <div className="ml-6 space-y-2 border-l-2 border-muted pl-4">
-                        {deptUnits.map((unit) => {
-                          const unitRole = currentAccess?.unitRoles.get(unit.id);
-                          const isSelected = !!unitRole;
-                          return (
-                            <div key={unit.id} className="flex items-center justify-between">
-                              <div className="flex items-center space-x-2">
-                                <Checkbox 
-                                  id={`unit-${unit.id}`}
-                                  checked={isSelected}
-                                  onCheckedChange={() => toggleUnit(dept.id, unit.id)}
-                                />
-                                <label 
-                                  htmlFor={`unit-${unit.id}`}
-                                  className="text-sm cursor-pointer"
-                                >
-                                  {unit.name}
-                                </label>
-                              </div>
-                              {isSelected && (
-                                <Select value={unitRole} onValueChange={(v) => setUnitRole(dept.id, unit.id, v as UserRole)}>
-                                  <SelectTrigger className="w-24 h-7 text-xs">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="admin">Admin</SelectItem>
-                                    <SelectItem value="editor">Editor</SelectItem>
-                                    <SelectItem value="viewer">Viewer</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              )}
-                            </div>
-                          );
-                        })}
+                    return (
+                      <div key={dept.id} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id={`dept-${dept.id}`}
+                              checked={isFullDept}
+                              onCheckedChange={() => toggleDepartment(dept.id)}
+                            />
+                            <label 
+                              htmlFor={`dept-${dept.id}`}
+                              className="text-sm font-medium cursor-pointer flex items-center gap-2"
+                            >
+                              <Building2 className="h-4 w-4 text-primary" />
+                              {dept.name}
+                              <span className="text-xs text-muted-foreground">(full access)</span>
+                            </label>
+                          </div>
+                          {isFullDept && (
+                            <Select value={currentAccess?.fullDepartmentRole || 'viewer'} onValueChange={(v) => setDepartmentRole(dept.id, v as UserRole)}>
+                              <SelectTrigger className="w-28 h-8">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="admin">Admin</SelectItem>
+                                <SelectItem value="editor">Editor</SelectItem>
+                                <SelectItem value="viewer">Viewer</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
+                        
+                        {!isFullDept && deptUnits.length > 0 && (
+                          <div className="ml-6 space-y-2 border-l-2 border-muted pl-4">
+                            {deptUnits.map((unit) => {
+                              const unitRole = currentAccess?.unitRoles.get(unit.id);
+                              const isSelected = !!unitRole;
+                              return (
+                                <div key={unit.id} className="flex items-center justify-between">
+                                  <div className="flex items-center space-x-2">
+                                    <Checkbox 
+                                      id={`unit-${unit.id}`}
+                                      checked={isSelected}
+                                      onCheckedChange={() => toggleUnit(dept.id, unit.id)}
+                                    />
+                                    <label 
+                                      htmlFor={`unit-${unit.id}`}
+                                      className="text-sm cursor-pointer"
+                                    >
+                                      {unit.name}
+                                    </label>
+                                  </div>
+                                  {isSelected && (
+                                    <Select value={unitRole} onValueChange={(v) => setUnitRole(dept.id, unit.id, v as UserRole)}>
+                                      <SelectTrigger className="w-24 h-7 text-xs">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="admin">Admin</SelectItem>
+                                        <SelectItem value="editor">Editor</SelectItem>
+                                        <SelectItem value="viewer">Viewer</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                );
-              })}
+                    );
+                  })}
+                  {allowedDepartments.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No departments available for this domain.
+                    </p>
+                  )}
+                </div>
+              </ScrollArea>
             </div>
-          </ScrollArea>
-        </div>
+          </>
+        )}
+
+        {/* Prompt to enter email */}
+        {!hasValidEmail && (
+          <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm border rounded-md">
+            <div className="text-center p-8">
+              <Mail className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p>Enter a valid email address to see available departments</p>
+            </div>
+          </div>
+        )}
       </div>
 
-      <DialogFooter className="flex-shrink-0">
+      <DialogFooter className="flex-shrink-0 pt-4 border-t">
         <Button variant="outline" onClick={onClose}>
           Cancel
         </Button>
-        <Button disabled={!email || !name || selectedAccess.size === 0}>
+        <Button 
+          onClick={handleSave}
+          disabled={!email || !name || selectedAccess.size === 0 || !!hasError}
+        >
           <UserPlus className="h-4 w-4 mr-2" />
           Send Invitation
         </Button>
@@ -798,16 +928,16 @@ export default function UsersPage() {
     setIsEditOpen(true);
   };
 
-  const handleSavePermissions = (user: UserType, accessMap: ModalAccessState) => {
+  const handleInviteUser = (name: string, email: string, accessMap: ModalAccessState) => {
     const newAccess: UserAccess[] = [];
     accessMap.forEach((value, deptId) => {
       const dept = departments.find(d => d.id === deptId);
       if (dept) {
-        const unitAccess: UnitRoleAccess[] = [];
+        const unitAccessList: UnitRoleAccess[] = [];
         value.unitRoles.forEach((role, unitId) => {
           const unit = units.find(u => u.id === unitId);
           if (unit) {
-            unitAccess.push({ unitId, unitName: unit.name, role });
+            unitAccessList.push({ unitId, unitName: unit.name, role });
           }
         });
         newAccess.push({
@@ -815,7 +945,42 @@ export default function UsersPage() {
           departmentName: dept.name,
           fullDepartment: value.fullDepartment,
           fullDepartmentRole: value.fullDepartmentRole,
-          unitAccess
+          unitAccess: unitAccessList
+        });
+      }
+    });
+
+    const newUser: UserType = {
+      id: `user-${Date.now()}`,
+      name,
+      email,
+      access: newAccess,
+      addedAt: new Date().toISOString().split('T')[0],
+      addedBy: 'Current Admin'
+    };
+
+    setUserList([...userList, newUser]);
+    setIsInviteOpen(false);
+  };
+
+  const handleSavePermissions = (user: UserType, accessMap: ModalAccessState) => {
+    const newAccess: UserAccess[] = [];
+    accessMap.forEach((value, deptId) => {
+      const dept = departments.find(d => d.id === deptId);
+      if (dept) {
+        const unitAccessList: UnitRoleAccess[] = [];
+        value.unitRoles.forEach((role, unitId) => {
+          const unit = units.find(u => u.id === unitId);
+          if (unit) {
+            unitAccessList.push({ unitId, unitName: unit.name, role });
+          }
+        });
+        newAccess.push({
+          departmentId: deptId,
+          departmentName: dept.name,
+          fullDepartment: value.fullDepartment,
+          fullDepartmentRole: value.fullDepartmentRole,
+          unitAccess: unitAccessList
         });
       }
     });
@@ -923,7 +1088,11 @@ export default function UsersPage() {
                   Invite User
                 </Button>
               </DialogTrigger>
-              <InviteUserModal onClose={() => setIsInviteOpen(false)} />
+              <InviteUserModal 
+                onClose={() => setIsInviteOpen(false)} 
+                onSave={handleInviteUser}
+                existingUsers={userList}
+              />
             </Dialog>
           </>
         )}
