@@ -54,11 +54,13 @@ export interface ActivityLog {
   metadata?: Record<string, string>;
 }
 
+export type AdminRole = 'admin' | 'super_admin' | 'read_only';
+
 export interface Admin {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'super_admin';
+  role: AdminRole;
   addedAt: string;
   addedBy: string;
 }
@@ -66,6 +68,8 @@ export interface Admin {
 export interface WhitelistedDomain {
   id: string;
   domain: string;
+  name: string;
+  departmentIds: string[];
   addedAt: string;
   addedBy: string;
 }
@@ -268,17 +272,17 @@ export const admins: Admin[] = [
   { id: 'admin-5', name: 'Declan Walsh', email: 'declan.walsh@ogcio.gov.ie', role: 'admin', addedAt: '2024-01-20', addedBy: 'Marie O\'Sullivan' },
 ];
 
-// Mock Whitelisted Domains
+// Mock Whitelisted Domains with department associations
 export const whitelistedDomains: WhitelistedDomain[] = [
-  { id: 'wl-1', domain: 'gov.ie', addedAt: '2024-01-10', addedBy: 'Marie O\'Sullivan' },
-  { id: 'wl-2', domain: 'housing.gov.ie', addedAt: '2024-01-10', addedBy: 'Marie O\'Sullivan' },
-  { id: 'wl-3', domain: 'education.gov.ie', addedAt: '2024-01-10', addedBy: 'Marie O\'Sullivan' },
-  { id: 'wl-4', domain: 'health.gov.ie', addedAt: '2024-01-10', addedBy: 'Marie O\'Sullivan' },
-  { id: 'wl-5', domain: 'dsp.gov.ie', addedAt: '2024-01-15', addedBy: 'Patrick Murphy' },
-  { id: 'wl-6', domain: 'agriculture.gov.ie', addedAt: '2024-01-20', addedBy: 'Patrick Murphy' },
-  { id: 'wl-7', domain: 'justice.gov.ie', addedAt: '2024-01-25', addedBy: 'Sinead Kelly' },
-  { id: 'wl-8', domain: 'transport.gov.ie', addedAt: '2024-02-01', addedBy: 'Patrick Murphy' },
-  { id: 'wl-9', domain: 'ogcio.gov.ie', addedAt: '2024-01-05', addedBy: 'Marie O\'Sullivan' },
+  { id: 'wl-1', domain: 'gov.ie', name: 'General Government', departmentIds: ['dept-1', 'dept-2', 'dept-3', 'dept-4', 'dept-5', 'dept-6', 'dept-7', 'dept-8', 'dept-9', 'dept-10'], addedAt: '2024-01-10', addedBy: 'Marie O\'Sullivan' },
+  { id: 'wl-2', domain: 'housing.gov.ie', name: 'Housing Department', departmentIds: ['dept-1'], addedAt: '2024-01-10', addedBy: 'Marie O\'Sullivan' },
+  { id: 'wl-3', domain: 'education.gov.ie', name: 'Education Department', departmentIds: ['dept-2'], addedAt: '2024-01-10', addedBy: 'Marie O\'Sullivan' },
+  { id: 'wl-4', domain: 'health.gov.ie', name: 'Health Services', departmentIds: ['dept-3'], addedAt: '2024-01-10', addedBy: 'Marie O\'Sullivan' },
+  { id: 'wl-5', domain: 'dsp.gov.ie', name: 'Social Protection', departmentIds: ['dept-4'], addedAt: '2024-01-15', addedBy: 'Patrick Murphy' },
+  { id: 'wl-6', domain: 'agriculture.gov.ie', name: 'Agriculture Department', departmentIds: ['dept-6'], addedAt: '2024-01-20', addedBy: 'Patrick Murphy' },
+  { id: 'wl-7', domain: 'justice.gov.ie', name: 'Justice Department', departmentIds: ['dept-9'], addedAt: '2024-01-25', addedBy: 'Sinead Kelly' },
+  { id: 'wl-8', domain: 'transport.gov.ie', name: 'Transport Department', departmentIds: ['dept-7'], addedAt: '2024-02-01', addedBy: 'Patrick Murphy' },
+  { id: 'wl-9', domain: 'ogcio.gov.ie', name: 'OGCIO', departmentIds: ['dept-1', 'dept-2', 'dept-3', 'dept-4', 'dept-5', 'dept-6', 'dept-7', 'dept-8', 'dept-9', 'dept-10', 'dept-11', 'dept-12', 'dept-13', 'dept-14', 'dept-15', 'dept-16', 'dept-17', 'dept-18', 'dept-19', 'dept-20'], addedAt: '2024-01-05', addedBy: 'Marie O\'Sullivan' },
 ];
 
 // Current user (mock - for demo purposes)

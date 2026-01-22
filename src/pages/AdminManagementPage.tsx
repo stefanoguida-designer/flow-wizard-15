@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { admins, currentUser, activityLogs, type Admin } from "@/lib/mockData";
+import { admins, currentUser, activityLogs, type Admin, type AdminRole } from "@/lib/mockData";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,7 +55,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, ShieldCheck, Crown, Shield, History, Mail, Calendar, UserPlus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Plus, ShieldCheck, Crown, Shield, History, Mail, Calendar, UserPlus, MoreHorizontal, Pencil, Trash2, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { Navigate } from "react-router-dom";
 
@@ -64,10 +64,10 @@ export default function AdminManagementPage() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null);
-  const [editRole, setEditRole] = useState<"admin" | "super_admin">("admin");
+  const [editRole, setEditRole] = useState<AdminRole>("admin");
   const [newAdminName, setNewAdminName] = useState("");
   const [newAdminEmail, setNewAdminEmail] = useState("");
-  const [newAdminRole, setNewAdminRole] = useState<"admin" | "super_admin">("admin");
+  const [newAdminRole, setNewAdminRole] = useState<AdminRole>("admin");
   const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -202,11 +202,17 @@ export default function AdminManagementPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="admin-role">Role</Label>
-                  <Select value={newAdminRole} onValueChange={(v: "admin" | "super_admin") => setNewAdminRole(v)}>
+                  <Select value={newAdminRole} onValueChange={(v: AdminRole) => setNewAdminRole(v)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-popover">
+                      <SelectItem value="read_only">
+                        <div className="flex items-center gap-2">
+                          <Eye className="h-4 w-4" />
+                          <span>Read Only</span>
+                        </div>
+                      </SelectItem>
                       <SelectItem value="admin">
                         <div className="flex items-center gap-2">
                           <Shield className="h-4 w-4" />
@@ -222,7 +228,7 @@ export default function AdminManagementPage() {
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    Admins can manage units and users. Super Admins can also manage other administrators and whitelisting.
+                    Read Only can view users and access. Admins can manage units and users. Super Admins can also manage other administrators and whitelisting.
                   </p>
                 </div>
               </div>
@@ -274,6 +280,11 @@ export default function AdminManagementPage() {
                         <>
                           <Crown className="h-3 w-3" />
                           Super Admin
+                        </>
+                      ) : admin.role === 'read_only' ? (
+                        <>
+                          <Eye className="h-3 w-3" />
+                          Read Only
                         </>
                       ) : (
                         <>
@@ -370,13 +381,15 @@ export default function AdminManagementPage() {
                     <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                       {selectedAdmin.role === 'super_admin' ? (
                         <Crown className="h-4 w-4 text-muted-foreground" />
+                      ) : selectedAdmin.role === 'read_only' ? (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
                       ) : (
                         <Shield className="h-4 w-4 text-muted-foreground" />
                       )}
                       <div>
                         <p className="text-xs text-muted-foreground">Role</p>
                         <p className="text-sm font-medium">
-                          {selectedAdmin.role === 'super_admin' ? 'Super Admin' : 'Admin'}
+                          {selectedAdmin.role === 'super_admin' ? 'Super Admin' : selectedAdmin.role === 'read_only' ? 'Read Only' : 'Admin'}
                         </p>
                       </div>
                     </div>
@@ -441,11 +454,17 @@ export default function AdminManagementPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-admin-role">Role</Label>
-              <Select value={editRole} onValueChange={(v: "admin" | "super_admin") => setEditRole(v)}>
+              <Select value={editRole} onValueChange={(v: AdminRole) => setEditRole(v)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-popover">
+                  <SelectItem value="read_only">
+                    <div className="flex items-center gap-2">
+                      <Eye className="h-4 w-4" />
+                      <span>Read Only</span>
+                    </div>
+                  </SelectItem>
                   <SelectItem value="admin">
                     <div className="flex items-center gap-2">
                       <Shield className="h-4 w-4" />
@@ -461,7 +480,7 @@ export default function AdminManagementPage() {
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Admins can manage units and users. Super Admins can also manage other administrators and whitelisting.
+                Read Only can view users and access. Admins can manage units and users. Super Admins can also manage other administrators and whitelisting.
               </p>
             </div>
           </div>
