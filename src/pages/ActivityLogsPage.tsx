@@ -49,8 +49,8 @@ const actionIcons: Record<ActivityLog['action'], React.ReactNode> = {
   access_revoked: <ShieldMinus className="h-4 w-4" />,
   admin_invited: <ShieldCheck className="h-4 w-4" />,
   admin_removed: <ShieldMinus className="h-4 w-4" />,
-  whitelist_added: <KeyRound className="h-4 w-4" />,
-  whitelist_removed: <KeyRound className="h-4 w-4" />,
+  allowlist_added: <KeyRound className="h-4 w-4" />,
+  allowlist_removed: <KeyRound className="h-4 w-4" />,
 };
 
 const actionColors: Record<ActivityLog['action'], string> = {
@@ -63,8 +63,8 @@ const actionColors: Record<ActivityLog['action'], string> = {
   access_revoked: "bg-warning/10 text-warning",
   admin_invited: "bg-primary/10 text-primary",
   admin_removed: "bg-destructive/10 text-destructive",
-  whitelist_added: "bg-success/10 text-success",
-  whitelist_removed: "bg-destructive/10 text-destructive",
+  allowlist_added: "bg-success/10 text-success",
+  allowlist_removed: "bg-destructive/10 text-destructive",
 };
 
 const actionLabels: Record<ActivityLog['action'], string> = {
@@ -77,8 +77,8 @@ const actionLabels: Record<ActivityLog['action'], string> = {
   access_revoked: "Access Revoked",
   admin_invited: "Admin Invited",
   admin_removed: "Admin Removed",
-  whitelist_added: "Domain Added",
-  whitelist_removed: "Domain Removed",
+  allowlist_added: "Domain Added",
+  allowlist_removed: "Domain Removed",
 };
 
 export default function ActivityLogsPage() {
@@ -204,7 +204,7 @@ export default function ActivityLogsPage() {
             <SelectItem value="unit">Units</SelectItem>
             <SelectItem value="department">Departments</SelectItem>
             <SelectItem value="admin">Admins</SelectItem>
-            <SelectItem value="whitelist">Whitelist</SelectItem>
+            <SelectItem value="allowlist">Allow List</SelectItem>
           </SelectContent>
         </Select>
       </div>

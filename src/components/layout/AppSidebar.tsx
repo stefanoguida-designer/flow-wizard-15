@@ -115,9 +115,9 @@ export function AppSidebar() {
                       </NavLink>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <NavLink to="/whitelisting" className="flex items-center gap-2 cursor-pointer">
+                      <NavLink to="/allow-list" className="flex items-center gap-2 cursor-pointer">
                         <ListChecks className="h-4 w-4" />
-                        <span>Whitelisting</span>
+                        <span>Allow List</span>
                       </NavLink>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />

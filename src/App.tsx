@@ -7,7 +7,7 @@ import DepartmentsPage from "./pages/DepartmentsPage";
 import DepartmentDetailPage from "./pages/DepartmentDetailPage";
 import UsersPage from "./pages/UsersPage";
 import ActivityLogsPage from "./pages/ActivityLogsPage";
-import WhitelistingPage from "./pages/WhitelistingPage";
+import AllowListPage from "./pages/AllowListPage";
 import AdminManagementPage from "./pages/AdminManagementPage";
 import NotFound from "./pages/NotFound";
 
@@ -25,7 +25,7 @@ const App = () => (
           <Route path="/departments/:id" element={<DepartmentDetailPage />} />
           <Route path="/users" element={<UsersPage />} />
           <Route path="/activity-logs" element={<ActivityLogsPage />} />
-          <Route path="/whitelisting" element={<WhitelistingPage />} />
+          <Route path="/allow-list" element={<AllowListPage />} />
           <Route path="/admin-management" element={<AdminManagementPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

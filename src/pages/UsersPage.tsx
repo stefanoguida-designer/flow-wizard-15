@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { users, departments, units, getUserActivityLogs, whitelistedDomains, admins, type User as UserType, type UserAccess, type UserRole, type UnitRoleAccess } from "@/lib/mockData";
+import { users, departments, units, getUserActivityLogs, allowListedDomains, type User as UserType, type UserAccess, type UserRole, type UnitRoleAccess } from "@/lib/mockData";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,6 +59,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { 
   UserPlus, 
@@ -75,10 +88,12 @@ import {
   Pencil,
   Trash2,
   AlertTriangle,
-  ShieldAlert,
-  ExternalLink
+  ExternalLink,
+  Check,
+  ChevronsUpDown
 } from "lucide-react";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 // Get department abbreviation helper
 function getDeptAbbreviation(departmentName: string): string {
@@ -86,15 +101,15 @@ function getDeptAbbreviation(departmentName: string): string {
   return dept?.abbreviation || departmentName;
 }
 
-// Access Tag Component - stops propagation to prevent opening the sidebar
-function AccessTag({ access }: { access: UserAccess }) {
-  const [isOpen, setIsOpen] = useState(false);
+// Access Tag Component - clicking opens the sidebar
+function AccessTag({ 
+  access, 
+  onClick 
+}: { 
+  access: UserAccess; 
+  onClick: () => void;
+}) {
   const abbreviation = getDeptAbbreviation(access.departmentName);
-
-  const handleToggle = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsOpen(!isOpen);
-  };
 
   if (access.fullDepartment) {
     return (
@@ -104,39 +119,20 @@ function AccessTag({ access }: { access: UserAccess }) {
     );
   }
 
-  if (access.unitAccess.length === 1) {
-    return (
-      <Badge variant="outline" className="border-primary text-primary">
-        {abbreviation}/{access.unitAccess[0].unitName}
-      </Badge>
-    );
-  }
+  const unitCount = access.unitAccess.length;
 
-  // Multiple units - clickable to expand inline
+  // All unit tags now just show count and open sidebar on click
   return (
-    <div className="inline-flex flex-col">
-      <Badge 
-        variant="outline" 
-        className="border-primary text-primary cursor-pointer hover:bg-primary/10"
-        onClick={handleToggle}
-      >
-        {abbreviation} ({access.unitAccess.length} units)
-        {isOpen ? (
-          <ChevronDown className="h-3 w-3 ml-1" />
-        ) : (
-          <ChevronRight className="h-3 w-3 ml-1" />
-        )}
-      </Badge>
-      {isOpen && (
-        <div className="mt-1 ml-2 space-y-1">
-          {access.unitAccess.map((ua, index) => (
-            <div key={index} className="text-xs text-muted-foreground pl-2 border-l-2 border-primary/30">
-              {ua.unitName}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+    <Badge 
+      variant="outline" 
+      className="border-primary text-primary cursor-pointer hover:bg-primary/10"
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+    >
+      {unitCount} unit{unitCount !== 1 ? 's' : ''}
+    </Badge>
   );
 }
 
@@ -365,19 +361,13 @@ function InviteUserModal({ onClose, onSave, existingUsers }: {
     return email.split('@')[1]?.toLowerCase();
   }, [email]);
 
-  // Check if domain is whitelisted
-  const whitelistMatch = useMemo(() => {
+  // Check if domain is in allow list
+  const allowListMatch = useMemo(() => {
     if (!emailDomain) return null;
-    return whitelistedDomains.find(d => 
+    return allowListedDomains.find(d => 
       emailDomain === d.domain.toLowerCase() || emailDomain.endsWith('.' + d.domain.toLowerCase())
     );
   }, [emailDomain]);
-
-  // Check if email belongs to an admin/super-admin
-  const isAdminEmail = useMemo(() => {
-    if (!email) return null;
-    return admins.find(a => a.email.toLowerCase() === email.toLowerCase());
-  }, [email]);
 
   // Check if user already exists
   const existingUser = useMemo(() => {
@@ -385,16 +375,16 @@ function InviteUserModal({ onClose, onSave, existingUsers }: {
     return existingUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
   }, [email, existingUsers]);
 
-  // Get allowed departments based on whitelisted domain
+  // Get allowed departments based on allow listed domain
   const allowedDepartments = useMemo(() => {
-    if (!whitelistMatch) return [];
-    return departments.filter(d => whitelistMatch.departmentIds.includes(d.id));
-  }, [whitelistMatch]);
+    if (!allowListMatch) return [];
+    return departments.filter(d => allowListMatch.departmentIds.includes(d.id));
+  }, [allowListMatch]);
 
-  // Validation state
+  // Validation state - removed admin check
   const hasValidEmail = email.includes('@') && emailDomain;
-  const hasError = hasValidEmail && (!whitelistMatch || isAdminEmail || existingUser);
-  const canShowAccessPanel = hasValidEmail && whitelistMatch && !isAdminEmail && !existingUser;
+  const hasError = hasValidEmail && (!allowListMatch || existingUser);
+  const canShowAccessPanel = hasValidEmail && allowListMatch && !existingUser;
 
   const toggleDepartment = (deptId: string) => {
     const newAccess = new Map(selectedAccess);
@@ -489,44 +479,25 @@ function InviteUserModal({ onClose, onSave, existingUsers }: {
         </div>
 
         {/* Error States */}
-        {hasValidEmail && !whitelistMatch && (
+        {hasValidEmail && !allowListMatch && (
           <Alert variant="destructive" className="flex-shrink-0">
             <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Domain Not Whitelisted</AlertTitle>
+            <AlertTitle>Domain Not in Allow List</AlertTitle>
             <AlertDescription className="flex items-start justify-between gap-4">
               <span>
-                The domain "@{emailDomain}" is not in the whitelist. Only users from whitelisted domains can be invited.
+                The domain "@{emailDomain}" is not in the allow list. Only users from allowed domains can be invited.
               </span>
               <Button variant="outline" size="sm" className="shrink-0" asChild>
-                <a href="/whitelisting">
+                <a href="/allow-list">
                   <ExternalLink className="h-3 w-3 mr-1" />
-                  Manage Whitelist
+                  Manage Allow List
                 </a>
               </Button>
             </AlertDescription>
           </Alert>
         )}
 
-        {isAdminEmail && (
-          <Alert variant="destructive" className="flex-shrink-0">
-            <ShieldAlert className="h-4 w-4" />
-            <AlertTitle>Security Restriction</AlertTitle>
-            <AlertDescription className="flex items-start justify-between gap-4">
-              <span>
-                This email belongs to {isAdminEmail.role === 'super_admin' ? 'a Super Admin' : isAdminEmail.role === 'read_only' ? 'a Read Only admin' : 'an Admin'} ({isAdminEmail.name}). 
-                Platform administrators cannot be added as users to prevent unauthorized access escalation.
-              </span>
-              <Button variant="outline" size="sm" className="shrink-0" asChild>
-                <a href="/admin-management">
-                  <ExternalLink className="h-3 w-3 mr-1" />
-                  View Admins
-                </a>
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {existingUser && !isAdminEmail && (
+        {existingUser && (
           <Alert variant="destructive" className="flex-shrink-0">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>User Already Exists</AlertTitle>
@@ -536,7 +507,7 @@ function InviteUserModal({ onClose, onSave, existingUsers }: {
           </Alert>
         )}
 
-        {/* Access Panel - Only visible when email is valid and whitelisted */}
+        {/* Access Panel - Only visible when email is valid and in allow list */}
         {canShowAccessPanel && (
           <>
             <Separator className="flex-shrink-0" />
@@ -669,7 +640,7 @@ function InviteUserModal({ onClose, onSave, existingUsers }: {
   );
 }
 
-// User Detail Sidebar
+// User Detail Sidebar - removed "Full Access" tag
 function UserDetailSheet({ 
   user, 
   open, 
@@ -730,11 +701,6 @@ function UserDetailSheet({
                       <div className="flex items-center gap-2">
                         <Building2 className="h-4 w-4 text-primary" />
                         <span className="font-medium text-sm">{access.departmentName}</span>
-                        {access.fullDepartment && (
-                          <Badge className="bg-primary text-primary-foreground text-xs">
-                            Full Access
-                          </Badge>
-                        )}
                       </div>
                       {access.fullDepartment && access.fullDepartmentRole && (
                         <RoleBadge role={access.fullDepartmentRole} />
@@ -840,6 +806,101 @@ function UserDetailSheet({
   );
 }
 
+// Searchable Filter Dropdown Component
+function SearchableFilterDropdown({
+  value,
+  onValueChange,
+  options,
+  placeholder,
+  allLabel,
+  className
+}: {
+  value: string;
+  onValueChange: (value: string) => void;
+  options: { id: string; label: string }[];
+  placeholder: string;
+  allLabel: string;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredOptions = useMemo(() => {
+    if (!searchQuery) return options;
+    const query = searchQuery.toLowerCase();
+    return options.filter(opt => opt.label.toLowerCase().includes(query));
+  }, [options, searchQuery]);
+
+  const selectedLabel = value === "all" 
+    ? allLabel 
+    : options.find(o => o.id === value)?.label || placeholder;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className={cn("justify-between", className)}
+        >
+          <span className="truncate">{selectedLabel}</span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[250px] p-0 bg-popover" align="start">
+        <Command>
+          <CommandInput 
+            placeholder={`Search ${placeholder.toLowerCase()}...`} 
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+          />
+          <CommandList>
+            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandGroup>
+              <CommandItem
+                value="all"
+                onSelect={() => {
+                  onValueChange("all");
+                  setOpen(false);
+                  setSearchQuery("");
+                }}
+              >
+                <Check
+                  className={cn(
+                    "mr-2 h-4 w-4",
+                    value === "all" ? "opacity-100" : "opacity-0"
+                  )}
+                />
+                {allLabel}
+              </CommandItem>
+              {filteredOptions.map((option) => (
+                <CommandItem
+                  key={option.id}
+                  value={option.label}
+                  onSelect={() => {
+                    onValueChange(option.id);
+                    setOpen(false);
+                    setSearchQuery("");
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === option.id ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  {option.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export default function UsersPage() {
   const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
@@ -885,6 +946,14 @@ export default function UsersPage() {
     if (departmentFilter === "all") return units;
     return units.filter(u => u.departmentId === departmentFilter);
   }, [departmentFilter]);
+
+  const departmentOptions = useMemo(() => 
+    departments.map(d => ({ id: d.id, label: d.abbreviation })),
+  []);
+
+  const unitOptions = useMemo(() => 
+    availableUnits.map(u => ({ id: u.id, label: u.name })),
+  [availableUnits]);
 
   const handleDeleteUser = (user: UserType) => {
     setUserList(userList.filter(u => u.id !== user.id));
@@ -1055,30 +1124,24 @@ export default function UsersPage() {
               />
             </div>
 
-            <Select value={departmentFilter} onValueChange={(v) => { setDepartmentFilter(v); setUnitFilter("all"); }}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Filter by department" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover">
-                <SelectItem value="all">All Departments</SelectItem>
-                {departments.map((dept) => (
-                  <SelectItem key={dept.id} value={dept.id}>{dept.abbreviation}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SearchableFilterDropdown
+              value={departmentFilter}
+              onValueChange={(v) => { setDepartmentFilter(v); setUnitFilter("all"); }}
+              options={departmentOptions}
+              placeholder="Department"
+              allLabel="All Departments"
+              className="w-[200px]"
+            />
 
             {departmentFilter !== "all" && (
-              <Select value={unitFilter} onValueChange={setUnitFilter}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Filter by unit" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover">
-                  <SelectItem value="all">All Units</SelectItem>
-                  {availableUnits.map((unit) => (
-                    <SelectItem key={unit.id} value={unit.id}>{unit.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableFilterDropdown
+                value={unitFilter}
+                onValueChange={setUnitFilter}
+                options={unitOptions}
+                placeholder="Unit"
+                allLabel="All Units"
+                className="w-[200px]"
+              />
             )}
 
             <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
@@ -1166,7 +1229,11 @@ export default function UsersPage() {
                   <TableCell>
                     <div className="flex flex-wrap gap-1 items-start">
                       {user.access.map((access, index) => (
-                        <AccessTag key={index} access={access} />
+                        <AccessTag 
+                          key={index} 
+                          access={access} 
+                          onClick={() => setSelectedUser(user)}
+                        />
                       ))}
                     </div>
                   </TableCell>
