@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { whitelistedDomains, departments, type WhitelistedDomain } from "@/lib/mockData";
+import { allowListedDomains, departments, type AllowListedDomain } from "@/lib/mockData";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -34,9 +33,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Plus, Trash2, Globe, ShieldCheck, Pencil, Building2 } from "lucide-react";
+import { Plus, Trash2, Globe, ShieldCheck, Pencil, Building2, Search } from "lucide-react";
 import { toast } from "sonner";
 
 // Domain Modal Component for Add/Edit
@@ -47,7 +45,7 @@ function DomainModal({
   onSave,
   mode
 }: { 
-  domain?: WhitelistedDomain; 
+  domain?: AllowListedDomain; 
   isOpen: boolean; 
   onClose: () => void;
   onSave: (data: { domain: string; name: string; departmentIds: string[] }) => void;
@@ -56,6 +54,16 @@ function DomainModal({
   const [domainValue, setDomainValue] = useState(domain?.domain || "");
   const [nameValue, setNameValue] = useState(domain?.name || "");
   const [selectedDepts, setSelectedDepts] = useState<Set<string>>(new Set(domain?.departmentIds || []));
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredDepartments = useMemo(() => {
+    if (!searchQuery) return departments;
+    const query = searchQuery.toLowerCase();
+    return departments.filter(d => 
+      d.name.toLowerCase().includes(query) || 
+      d.abbreviation.toLowerCase().includes(query)
+    );
+  }, [searchQuery]);
 
   const toggleDepartment = (deptId: string) => {
     const newDepts = new Set(selectedDepts);
@@ -82,7 +90,7 @@ function DomainModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>{mode === 'add' ? 'Add Whitelisted Domain' : 'Edit Domain'}</DialogTitle>
+          <DialogTitle>{mode === 'add' ? 'Add Domain to Allow List' : 'Edit Domain'}</DialogTitle>
           <DialogDescription>
             {mode === 'add' 
               ? 'Add a new email domain to allow users with that domain to be invited to specific departments.'
@@ -122,9 +130,19 @@ function DomainModal({
               Select which departments users with this domain can be invited to.
             </p>
             
-            <ScrollArea className="h-[250px] rounded-md border p-4">
+            <div className="relative mb-2">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search departments..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            <ScrollArea className="h-[200px] rounded-md border p-4">
               <div className="space-y-2">
-                {departments.map((dept) => (
+                {filteredDepartments.map((dept) => (
                   <div key={dept.id} className="flex items-center space-x-2">
                     <Checkbox 
                       id={`dept-${dept.id}`}
@@ -137,9 +155,15 @@ function DomainModal({
                     >
                       <Building2 className="h-4 w-4 text-primary" />
                       {dept.name}
+                      <span className="text-xs text-muted-foreground">({dept.abbreviation})</span>
                     </label>
                   </div>
                 ))}
+                {filteredDepartments.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No departments match your search.
+                  </p>
+                )}
               </div>
             </ScrollArea>
           </div>
@@ -158,11 +182,11 @@ function DomainModal({
   );
 }
 
-export default function WhitelistingPage() {
-  const [domains, setDomains] = useState<WhitelistedDomain[]>(whitelistedDomains);
+export default function AllowListPage() {
+  const [domains, setDomains] = useState<AllowListedDomain[]>(allowListedDomains);
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [editingDomain, setEditingDomain] = useState<WhitelistedDomain | null>(null);
-  const [domainToDelete, setDomainToDelete] = useState<WhitelistedDomain | null>(null);
+  const [editingDomain, setEditingDomain] = useState<AllowListedDomain | null>(null);
+  const [domainToDelete, setDomainToDelete] = useState<AllowListedDomain | null>(null);
 
   const getDepartmentNames = (departmentIds: string[]) => {
     return departmentIds
@@ -173,11 +197,11 @@ export default function WhitelistingPage() {
 
   const handleAddDomain = (data: { domain: string; name: string; departmentIds: string[] }) => {
     if (domains.some(d => d.domain.toLowerCase() === data.domain.toLowerCase())) {
-      toast.error("This domain is already whitelisted");
+      toast.error("This domain is already in the allow list");
       return;
     }
 
-    const newDomainEntry: WhitelistedDomain = {
+    const newDomainEntry: AllowListedDomain = {
       id: `wl-${Date.now()}`,
       domain: data.domain,
       name: data.name,
@@ -188,7 +212,7 @@ export default function WhitelistingPage() {
 
     setDomains([...domains, newDomainEntry]);
     setIsAddOpen(false);
-    toast.success(`Domain "${data.domain}" added to whitelist`);
+    toast.success(`Domain "${data.domain}" added to allow list`);
   };
 
   const handleEditDomain = (data: { domain: string; name: string; departmentIds: string[] }) => {
@@ -203,16 +227,16 @@ export default function WhitelistingPage() {
     toast.success(`Domain "${data.domain}" updated`);
   };
 
-  const handleRemoveDomain = (domain: WhitelistedDomain) => {
+  const handleRemoveDomain = (domain: AllowListedDomain) => {
     setDomains(domains.filter(d => d.id !== domain.id));
     setDomainToDelete(null);
-    toast.success(`Domain "${domain.domain}" removed from whitelist`);
+    toast.success(`Domain "${domain.domain}" removed from allow list`);
   };
 
   return (
     <AppLayout
-      breadcrumbs={[{ label: "Whitelisting" }]}
-      title="Email Whitelisting"
+      breadcrumbs={[{ label: "Allow List" }]}
+      title="Email Allow List"
     >
       <div className="space-y-6">
         <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-lg border">
@@ -220,9 +244,9 @@ export default function WhitelistingPage() {
             <ShieldCheck className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="font-medium">About Whitelisting</h3>
+            <h3 className="font-medium">About Allow List</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              Only users with email addresses from whitelisted domains can be invited to the platform. 
+              Only users with email addresses from allowed domains can be invited to the platform. 
               Each domain is associated with specific departments that users can be granted access to.
             </p>
           </div>
@@ -230,9 +254,9 @@ export default function WhitelistingPage() {
 
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold">Whitelisted Domains</h2>
+            <h2 className="text-lg font-semibold">Allowed Domains</h2>
             <p className="text-sm text-muted-foreground">
-              {domains.length} domain{domains.length !== 1 ? 's' : ''} currently whitelisted
+              {domains.length} domain{domains.length !== 1 ? 's' : ''} currently allowed
             </p>
           </div>
           
@@ -256,7 +280,7 @@ export default function WhitelistingPage() {
               {domains.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                    No domains whitelisted. Add one to allow user invitations.
+                    No domains in allow list. Add one to allow user invitations.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -346,7 +370,7 @@ export default function WhitelistingPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Domain</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove "@{domainToDelete?.domain}" from the whitelist? 
+              Are you sure you want to remove "@{domainToDelete?.domain}" from the allow list? 
               Users with this domain will no longer be able to be invited to the platform.
             </AlertDialogDescription>
           </AlertDialogHeader>

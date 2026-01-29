@@ -47,6 +47,7 @@ export default function DepartmentDetailPage() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
   const [newUnitName, setNewUnitName] = useState("");
+  const [newUnitAcronym, setNewUnitAcronym] = useState("");
 
   if (!department) {
     return (
@@ -67,6 +68,7 @@ export default function DepartmentDetailPage() {
     const newUnit: Unit = {
       id: `unit-${Date.now()}`,
       name: newUnitName,
+      acronym: newUnitAcronym.trim() || undefined,
       departmentId: department.id,
       departmentName: department.name,
       usersCount: 0,
@@ -76,6 +78,7 @@ export default function DepartmentDetailPage() {
     
     setUnits([...units, newUnit]);
     setNewUnitName("");
+    setNewUnitAcronym("");
     setIsCreateOpen(false);
     toast.success(`Unit "${newUnitName}" created successfully`);
   };
@@ -84,12 +87,15 @@ export default function DepartmentDetailPage() {
     if (!editingUnit || !newUnitName.trim()) return;
     
     setUnits(units.map(u => 
-      u.id === editingUnit.id ? { ...u, name: newUnitName } : u
+      u.id === editingUnit.id 
+        ? { ...u, name: newUnitName, acronym: newUnitAcronym.trim() || undefined } 
+        : u
     ));
     setIsEditOpen(false);
     setEditingUnit(null);
     setNewUnitName("");
-    toast.success("Unit renamed successfully");
+    setNewUnitAcronym("");
+    toast.success("Unit updated successfully");
   };
 
   const handleDeleteUnit = (unit: Unit) => {
@@ -100,6 +106,7 @@ export default function DepartmentDetailPage() {
   const openEditDialog = (unit: Unit) => {
     setEditingUnit(unit);
     setNewUnitName(unit.name);
+    setNewUnitAcronym(unit.acronym || "");
     setIsEditOpen(true);
   };
 
@@ -174,6 +181,19 @@ export default function DepartmentDetailPage() {
                       onChange={(e) => setNewUnitName(e.target.value)}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="unit-acronym">Acronym (optional)</Label>
+                    <Input
+                      id="unit-acronym"
+                      placeholder="e.g., DCC"
+                      value={newUnitAcronym}
+                      onChange={(e) => setNewUnitAcronym(e.target.value)}
+                      maxLength={10}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      A short abbreviation for the unit name
+                    </p>
+                  </div>
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
@@ -190,6 +210,7 @@ export default function DepartmentDetailPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Unit Name</TableHead>
+                  <TableHead>Acronym</TableHead>
                   <TableHead>Users</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Created By</TableHead>
@@ -199,7 +220,7 @@ export default function DepartmentDetailPage() {
               <TableBody>
                 {units.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       No units found. Create one to get started.
                     </TableCell>
                   </TableRow>
@@ -207,6 +228,15 @@ export default function DepartmentDetailPage() {
                   units.map((unit) => (
                     <TableRow key={unit.id}>
                       <TableCell className="font-medium">{unit.name}</TableCell>
+                      <TableCell>
+                        {unit.acronym ? (
+                          <Badge variant="outline" className="text-xs">
+                            {unit.acronym}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">—</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <Link 
                           to={`/users?department=${department.id}&unit=${unit.id}`}
@@ -270,9 +300,9 @@ export default function DepartmentDetailPage() {
         <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Rename Unit</DialogTitle>
+              <DialogTitle>Edit Unit</DialogTitle>
               <DialogDescription>
-                Update the name of this unit
+                Update the unit details
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
@@ -283,6 +313,19 @@ export default function DepartmentDetailPage() {
                   value={newUnitName}
                   onChange={(e) => setNewUnitName(e.target.value)}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-unit-acronym">Acronym (optional)</Label>
+                <Input
+                  id="edit-unit-acronym"
+                  placeholder="e.g., DCC"
+                  value={newUnitAcronym}
+                  onChange={(e) => setNewUnitAcronym(e.target.value)}
+                  maxLength={10}
+                />
+                <p className="text-xs text-muted-foreground">
+                  A short abbreviation for the unit name
+                </p>
               </div>
             </div>
             <DialogFooter>
