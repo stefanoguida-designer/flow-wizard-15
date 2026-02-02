@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Plus, Trash2, Globe, ShieldCheck, Pencil, Building2, Search } from "lucide-react";
 import { toast } from "sonner";
+import { SortableTableHead, useSorting, toggleSort, type SortDirection } from "@/components/ui/sortable-table-head";
 
 // Domain Modal Component for Add/Edit
 function DomainModal({ 
@@ -187,6 +188,20 @@ export default function AllowListPage() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingDomain, setEditingDomain] = useState<AllowListedDomain | null>(null);
   const [domainToDelete, setDomainToDelete] = useState<AllowListedDomain | null>(null);
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+
+  const handleSort = (key: string) => {
+    const result = toggleSort(key, sortKey, sortDirection);
+    setSortKey(result.key);
+    setSortDirection(result.direction);
+  };
+
+  const sortedDomains = useSorting(domains, sortKey, sortDirection, (domain, key) => {
+    if (key === "domain") return domain.domain;
+    if (key === "name") return domain.name;
+    return "";
+  });
 
   const getDepartmentNames = (departmentIds: string[]) => {
     return departmentIds
@@ -270,8 +285,22 @@ export default function AllowListPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Domain</TableHead>
-                <TableHead>Name</TableHead>
+                <SortableTableHead
+                  sortKey="domain"
+                  currentSortKey={sortKey}
+                  currentSortDirection={sortDirection}
+                  onSort={handleSort}
+                >
+                  Domain
+                </SortableTableHead>
+                <SortableTableHead
+                  sortKey="name"
+                  currentSortKey={sortKey}
+                  currentSortDirection={sortDirection}
+                  onSort={handleSort}
+                >
+                  Name
+                </SortableTableHead>
                 <TableHead>Departments</TableHead>
                 <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
@@ -284,7 +313,7 @@ export default function AllowListPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                domains.map((domain) => {
+                sortedDomains.map((domain) => {
                   const deptAbbrs = getDepartmentNames(domain.departmentIds);
                   return (
                     <TableRow key={domain.id}>
