@@ -55,7 +55,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, ShieldCheck, Crown, Shield, History, Mail, Calendar, UserPlus, MoreHorizontal, Pencil, Trash2, Eye } from "lucide-react";
+import { Plus, ShieldCheck, Crown, Shield, History, Mail, Calendar, UserPlus, MoreHorizontal, Pencil, Trash2, Eye, Ban, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Navigate } from "react-router-dom";
 
@@ -70,11 +70,16 @@ export default function AdminManagementPage() {
   const [newAdminRole, setNewAdminRole] = useState<AdminRole>("admin");
   const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"active" | "disabled">("active");
 
   // Only super admins can access this page
   if (currentUser.role !== 'super_admin') {
     return <Navigate to="/departments" replace />;
   }
+
+  // Filter admins by status
+  const activeAdmins = adminList.filter(a => a.status === 'active');
+  const disabledAdmins = adminList.filter(a => a.status === 'disabled');
 
   const handleAddAdmin = () => {
     if (!newAdminName.trim() || !newAdminEmail.trim()) return;
@@ -89,6 +94,7 @@ export default function AdminManagementPage() {
       name: newAdminName,
       email: newAdminEmail,
       role: newAdminRole,
+      status: 'active',
       addedAt: new Date().toISOString().split('T')[0],
       addedBy: currentUser.name,
     };
@@ -111,6 +117,25 @@ export default function AdminManagementPage() {
     setSidebarOpen(false);
     setSelectedAdmin(null);
     toast.success(`Admin "${admin.name}" removed successfully`);
+  };
+
+  const handleDisableAdmin = (admin: Admin) => {
+    if (admin.id === currentUser.id) {
+      toast.error("You cannot disable yourself");
+      return;
+    }
+
+    setAdminList(adminList.map(a => 
+      a.id === admin.id ? { ...a, status: 'disabled' as const } : a
+    ));
+    toast.success(`Admin "${admin.name}" has been disabled`);
+  };
+
+  const handleRestoreAdmin = (admin: Admin) => {
+    setAdminList(adminList.map(a => 
+      a.id === admin.id ? { ...a, status: 'active' as const } : a
+    ));
+    toast.success(`Admin "${admin.name}" has been restored`);
   };
 
   const handleRowClick = (admin: Admin) => {
@@ -140,6 +165,123 @@ export default function AdminManagementPage() {
     ).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   };
 
+  // Render admin table row with actions
+  const renderAdminRow = (admin: Admin, isDisabledTab: boolean) => (
+    <TableRow 
+      key={admin.id} 
+      className="cursor-pointer hover:bg-muted/50"
+      onClick={() => handleRowClick(admin)}
+    >
+      <TableCell>
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="font-medium">{admin.name}</span>
+            {admin.id === currentUser.id && (
+              <Badge variant="outline" className="text-xs">You</Badge>
+            )}
+          </div>
+          <div className="text-sm text-muted-foreground">{admin.email}</div>
+        </div>
+      </TableCell>
+      <TableCell>
+        <Badge 
+          variant={admin.role === 'super_admin' ? 'default' : 'secondary'}
+          className="gap-1"
+        >
+          {admin.role === 'super_admin' ? (
+            <>
+              <Crown className="h-3 w-3" />
+              Super Admin
+            </>
+          ) : admin.role === 'read_only' ? (
+            <>
+              <Eye className="h-3 w-3" />
+              Read Only
+            </>
+          ) : (
+            <>
+              <Shield className="h-3 w-3" />
+              Admin
+            </>
+          )}
+        </Badge>
+      </TableCell>
+      <TableCell>{admin.addedAt}</TableCell>
+      <TableCell>{admin.addedBy}</TableCell>
+      <TableCell>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+            <Button variant="ghost" size="icon">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-popover">
+            <DropdownMenuItem onClick={(e) => handleEditAdmin(admin, e)}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit role
+            </DropdownMenuItem>
+            
+            {isDisabledTab ? (
+              // Disabled tab: Restore option
+              <DropdownMenuItem 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRestoreAdmin(admin);
+                }}
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Restore admin
+              </DropdownMenuItem>
+            ) : (
+              // Active tab: Disable option
+              admin.id !== currentUser.id && (
+                <DropdownMenuItem 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDisableAdmin(admin);
+                  }}
+                >
+                  <Ban className="h-4 w-4 mr-2" />
+                  Disable admin
+                </DropdownMenuItem>
+              )
+            )}
+            
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <DropdownMenuItem 
+                  className="text-destructive focus:text-destructive"
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete admin
+                </DropdownMenuItem>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Administrator</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to permanently delete "{admin.name}" as an administrator? 
+                    This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={() => handleRemoveAdmin(admin)}
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </TableCell>
+    </TableRow>
+  );
+
   return (
     <AppLayout
       title="Admin Management"
@@ -153,7 +295,7 @@ export default function AdminManagementPage() {
             <h3 className="font-medium">Super Admin Access</h3>
             <p className="text-sm text-muted-foreground mt-1">
               As a Super Admin, you can invite other administrators to help manage the platform. 
-              Admins can manage units and users, while Super Admins can also manage other admins and whitelisting.
+              Admins can manage units and users, while Super Admins can also manage other admins and allow listing.
             </p>
           </div>
         </div>
@@ -162,7 +304,7 @@ export default function AdminManagementPage() {
           <div>
             <h2 className="text-lg font-semibold">Platform Administrators</h2>
             <p className="text-sm text-muted-foreground">
-              {adminList.length} administrator{adminList.length !== 1 ? 's' : ''} on the platform
+              {activeAdmins.length} active administrator{activeAdmins.length !== 1 ? 's' : ''} on the platform
             </p>
           </div>
           
@@ -228,7 +370,7 @@ export default function AdminManagementPage() {
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    Read Only can view users and access. Admins can manage units and users. Super Admins can also manage other administrators and whitelisting.
+                    Read Only can view users and access. Admins can manage units and users. Super Admins can also manage other administrators and allow listing.
                   </p>
                 </div>
               </div>
@@ -242,111 +384,73 @@ export default function AdminManagementPage() {
           </Dialog>
         </div>
 
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Added On</TableHead>
-                <TableHead>Added By</TableHead>
-                <TableHead className="w-[80px]">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {adminList.map((admin) => (
-                <TableRow 
-                  key={admin.id} 
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleRowClick(admin)}
-                >
-                  <TableCell>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{admin.name}</span>
-                        {admin.id === currentUser.id && (
-                          <Badge variant="outline" className="text-xs">You</Badge>
-                        )}
-                      </div>
-                      <div className="text-sm text-muted-foreground">{admin.email}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={admin.role === 'super_admin' ? 'default' : 'secondary'}
-                      className="gap-1"
-                    >
-                      {admin.role === 'super_admin' ? (
-                        <>
-                          <Crown className="h-3 w-3" />
-                          Super Admin
-                        </>
-                      ) : admin.role === 'read_only' ? (
-                        <>
-                          <Eye className="h-3 w-3" />
-                          Read Only
-                        </>
-                      ) : (
-                        <>
-                          <Shield className="h-3 w-3" />
-                          Admin
-                        </>
-                      )}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{admin.addedAt}</TableCell>
-                  <TableCell>{admin.addedBy}</TableCell>
-                  <TableCell>
-                    {admin.id !== currentUser.id && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-popover">
-                          <DropdownMenuItem onClick={(e) => handleEditAdmin(admin, e)}>
-                            <Pencil className="h-4 w-4 mr-2" />
-                            Edit role
-                          </DropdownMenuItem>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <DropdownMenuItem 
-                                className="text-destructive focus:text-destructive"
-                                onSelect={(e) => e.preventDefault()}
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Remove admin
-                              </DropdownMenuItem>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Remove Administrator</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to remove "{admin.name}" as an administrator? 
-                                  They will no longer have access to manage the platform.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  onClick={() => handleRemoveAdmin(admin)}
-                                >
-                                  Remove
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
+        {/* Tabs for Active / Disabled Admins */}
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "active" | "disabled")}>
+          <TabsList>
+            <TabsTrigger value="active" className="gap-2">
+              Active Administrators
+              <Badge variant="secondary" className="ml-1">{activeAdmins.length}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="disabled" className="gap-2">
+              Disabled Administrators
+              <Badge variant="secondary" className="ml-1">{disabledAdmins.length}</Badge>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="active" className="mt-4">
+            <Card>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Added On</TableHead>
+                    <TableHead>Added By</TableHead>
+                    <TableHead className="w-[80px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {activeAdmins.length > 0 ? (
+                    activeAdmins.map((admin) => renderAdminRow(admin, false))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        No active administrators
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="disabled" className="mt-4">
+            <Card>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Added On</TableHead>
+                    <TableHead>Added By</TableHead>
+                    <TableHead className="w-[80px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {disabledAdmins.length > 0 ? (
+                    disabledAdmins.map((admin) => renderAdminRow(admin, true))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        No disabled administrators
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Admin Details Sidebar */}
@@ -359,6 +463,9 @@ export default function AdminManagementPage() {
                   {selectedAdmin.name}
                   {selectedAdmin.id === currentUser.id && (
                     <Badge variant="outline" className="text-xs">You</Badge>
+                  )}
+                  {selectedAdmin.status === 'disabled' && (
+                    <Badge variant="secondary" className="text-xs">Disabled</Badge>
                   )}
                 </SheetTitle>
               </SheetHeader>
@@ -480,7 +587,7 @@ export default function AdminManagementPage() {
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Read Only can view users and access. Admins can manage units and users. Super Admins can also manage other administrators and whitelisting.
+                Read Only can view users and access. Admins can manage units and users. Super Admins can also manage other administrators and allow listing.
               </p>
             </div>
           </div>
