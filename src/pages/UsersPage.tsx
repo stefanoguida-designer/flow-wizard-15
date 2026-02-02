@@ -121,7 +121,7 @@ function AccessTag({
 
   const unitCount = access.unitAccess.length;
 
-  // All unit tags now just show count and open sidebar on click
+  // Show department abbreviation + unit count (e.g., "DE - 2 units")
   return (
     <Badge 
       variant="outline" 
@@ -131,7 +131,7 @@ function AccessTag({
         onClick();
       }}
     >
-      {unitCount} unit{unitCount !== 1 ? 's' : ''}
+      {abbreviation} - {unitCount} unit{unitCount !== 1 ? 's' : ''}
     </Badge>
   );
 }

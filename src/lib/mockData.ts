@@ -62,6 +62,7 @@ export interface Admin {
   name: string;
   email: string;
   role: AdminRole;
+  status: 'active' | 'disabled';
   addedAt: string;
   addedBy: string;
 }
@@ -295,12 +296,12 @@ export function getUserActivityLogs(userId: string): ActivityLog[] {
 
 // Admins data
 export const admins: Admin[] = [
-  { id: 'admin-1', name: 'Marie O\'Sullivan', email: 'marie.osullivan@gov.ie', role: 'super_admin', addedAt: '2023-06-15', addedBy: 'System' },
-  { id: 'admin-2', name: 'Patrick Murphy', email: 'patrick.murphy@gov.ie', role: 'admin', addedAt: '2024-01-22', addedBy: 'Marie O\'Sullivan' },
-  { id: 'admin-3', name: 'Sinead Kelly', email: 'sinead.kelly@gov.ie', role: 'admin', addedAt: '2024-02-10', addedBy: 'Marie O\'Sullivan' },
-  { id: 'admin-4', name: 'Aoife Brennan', email: 'aoife.brennan@gov.ie', role: 'super_admin', addedAt: '2023-08-01', addedBy: 'Marie O\'Sullivan' },
-  { id: 'admin-5', name: 'Declan Walsh', email: 'declan.walsh@gov.ie', role: 'admin', addedAt: '2024-03-01', addedBy: 'Aoife Brennan' },
-  { id: 'admin-6', name: 'Éanna Ó Faoláin', email: 'eanna.ofaolain@gov.ie', role: 'read_only', addedAt: '2024-04-01', addedBy: 'Marie O\'Sullivan' },
+  { id: 'admin-1', name: 'Marie O\'Sullivan', email: 'marie.osullivan@gov.ie', role: 'super_admin', status: 'active', addedAt: '2023-06-15', addedBy: 'System' },
+  { id: 'admin-2', name: 'Patrick Murphy', email: 'patrick.murphy@gov.ie', role: 'admin', status: 'active', addedAt: '2024-01-22', addedBy: 'Marie O\'Sullivan' },
+  { id: 'admin-3', name: 'Sinead Kelly', email: 'sinead.kelly@gov.ie', role: 'admin', status: 'active', addedAt: '2024-02-10', addedBy: 'Marie O\'Sullivan' },
+  { id: 'admin-4', name: 'Aoife Brennan', email: 'aoife.brennan@gov.ie', role: 'super_admin', status: 'active', addedAt: '2023-08-01', addedBy: 'Marie O\'Sullivan' },
+  { id: 'admin-5', name: 'Declan Walsh', email: 'declan.walsh@gov.ie', role: 'admin', status: 'disabled', addedAt: '2024-03-01', addedBy: 'Aoife Brennan' },
+  { id: 'admin-6', name: 'Éanna Ó Faoláin', email: 'eanna.ofaolain@gov.ie', role: 'read_only', status: 'active', addedAt: '2024-04-01', addedBy: 'Marie O\'Sullivan' },
 ];
 
 // Allow listed domains with department associations
