@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SortableTableHead, useSorting, toggleSort, type SortDirection } from "@/components/ui/sortable-table-head";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -226,6 +227,18 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
     }
   };
 
+  const [permissionsSearch, setPermissionsSearch] = useState("");
+  
+  const filteredDepartments = useMemo(() => {
+    if (!permissionsSearch) return departments;
+    const query = permissionsSearch.toLowerCase();
+    return departments.filter(d => 
+      d.name.toLowerCase().includes(query) || 
+      d.abbreviation.toLowerCase().includes(query) ||
+      units.filter(u => u.departmentId === d.id).some(u => u.name.toLowerCase().includes(query))
+    );
+  }, [permissionsSearch]);
+
   return (
     <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
       <DialogHeader className="flex-shrink-0">
@@ -249,9 +262,19 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
             Select departments/units and assign roles. Each unit can have a different role.
           </p>
           
-          <ScrollArea className="flex-1 h-[250px] rounded-md border p-4">
+          <div className="relative mb-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search departments or units..."
+              value={permissionsSearch}
+              onChange={(e) => setPermissionsSearch(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          
+          <ScrollArea className="flex-1 h-[220px] rounded-md border p-4">
             <div className="space-y-4">
-              {departments.map((dept) => {
+              {filteredDepartments.map((dept) => {
                 const deptUnits = units.filter(u => u.departmentId === dept.id);
                 const currentAccess = selectedAccess.get(dept.id);
                 const isFullDept = currentAccess?.fullDepartment || false;
@@ -354,6 +377,7 @@ function InviteUserModal({ onClose, onSave, existingUsers }: {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [selectedAccess, setSelectedAccess] = useState<ModalAccessState>(new Map());
+  const [invitePermissionsSearch, setInvitePermissionsSearch] = useState("");
 
   // Extract domain from email
   const emailDomain = useMemo(() => {
@@ -380,6 +404,17 @@ function InviteUserModal({ onClose, onSave, existingUsers }: {
     if (!allowListMatch) return [];
     return departments.filter(d => allowListMatch.departmentIds.includes(d.id));
   }, [allowListMatch]);
+
+  // Filter allowed departments by search query
+  const filteredAllowedDepartments = useMemo(() => {
+    if (!invitePermissionsSearch) return allowedDepartments;
+    const query = invitePermissionsSearch.toLowerCase();
+    return allowedDepartments.filter(d => 
+      d.name.toLowerCase().includes(query) || 
+      d.abbreviation.toLowerCase().includes(query) ||
+      units.filter(u => u.departmentId === d.id).some(u => u.name.toLowerCase().includes(query))
+    );
+  }, [allowedDepartments, invitePermissionsSearch]);
 
   // Validation state - removed admin check
   const hasValidEmail = email.includes('@') && emailDomain;
@@ -523,9 +558,19 @@ function InviteUserModal({ onClose, onSave, existingUsers }: {
                 Select departments/units and assign roles. Only departments associated with this domain are shown.
               </p>
               
-              <ScrollArea className="h-[200px] rounded-md border p-4">
+              <div className="relative mb-2">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search departments or units..."
+                  value={invitePermissionsSearch}
+                  onChange={(e) => setInvitePermissionsSearch(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              
+              <ScrollArea className="h-[180px] rounded-md border p-4">
                 <div className="space-y-4">
-                  {allowedDepartments.map((dept) => {
+                  {filteredAllowedDepartments.map((dept) => {
                     const deptUnits = units.filter(u => u.departmentId === dept.id);
                     const currentAccess = selectedAccess.get(dept.id);
                     const isFullDept = currentAccess?.fullDepartment || false;
@@ -913,6 +958,14 @@ export default function UsersPage() {
   const [userList, setUserList] = useState(users);
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [userToDelete, setUserToDelete] = useState<UserType | null>(null);
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+
+  const handleSort = (key: string) => {
+    const result = toggleSort(key, sortKey, sortDirection);
+    setSortKey(result.key);
+    setSortDirection(result.direction);
+  };
 
   const filteredUsers = useMemo(() => {
     return userList.filter(user => {
@@ -941,6 +994,15 @@ export default function UsersPage() {
     return true;
     });
   }, [searchQuery, departmentFilter, unitFilter, userList]);
+
+  const sortedUsers = useSorting(filteredUsers, sortKey, sortDirection, (user, key) => {
+    if (key === "name") return user.name;
+    if (key === "access") {
+      // Sort by first department name
+      return user.access[0]?.departmentName || "";
+    }
+    return "";
+  });
 
   const availableUnits = useMemo(() => {
     if (departmentFilter === "all") return units;
@@ -1191,24 +1253,38 @@ export default function UsersPage() {
             <TableRow>
               <TableHead className="w-[50px]">
                 <Checkbox 
-                  checked={selectedUsers.size === filteredUsers.length && filteredUsers.length > 0}
+                  checked={selectedUsers.size === sortedUsers.length && sortedUsers.length > 0}
                   onCheckedChange={toggleAllUsers}
                 />
               </TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Has Access To</TableHead>
+              <SortableTableHead
+                sortKey="name"
+                currentSortKey={sortKey}
+                currentSortDirection={sortDirection}
+                onSort={handleSort}
+              >
+                Name
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="access"
+                currentSortKey={sortKey}
+                currentSortDirection={sortDirection}
+                onSort={handleSort}
+              >
+                Has Access To
+              </SortableTableHead>
               <TableHead className="w-[80px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredUsers.length === 0 ? (
+            {sortedUsers.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
                   No users found matching your criteria.
                 </TableCell>
               </TableRow>
             ) : (
-              filteredUsers.map((user) => (
+              sortedUsers.map((user) => (
                 <TableRow 
                   key={user.id} 
                   className={`cursor-pointer hover:bg-muted/50 ${selectedUsers.has(user.id) ? 'bg-muted/30' : ''}`}

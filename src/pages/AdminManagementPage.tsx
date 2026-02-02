@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { admins, currentUser, activityLogs, type Admin, type AdminRole } from "@/lib/mockData";
 import { Card } from "@/components/ui/card";
@@ -58,6 +58,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, ShieldCheck, Crown, Shield, History, Mail, Calendar, UserPlus, MoreHorizontal, Pencil, Trash2, Eye, Ban, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Navigate } from "react-router-dom";
+import { SortableTableHead, useSorting, toggleSort, type SortDirection } from "@/components/ui/sortable-table-head";
 
 export default function AdminManagementPage() {
   const [adminList, setAdminList] = useState<Admin[]>(admins);
@@ -71,15 +72,36 @@ export default function AdminManagementPage() {
   const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"active" | "disabled">("active");
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
 
   // Only super admins can access this page
   if (currentUser.role !== 'super_admin') {
     return <Navigate to="/departments" replace />;
   }
 
+  const handleSort = (key: string) => {
+    const result = toggleSort(key, sortKey, sortDirection);
+    setSortKey(result.key);
+    setSortDirection(result.direction);
+  };
+
   // Filter admins by status
   const activeAdmins = adminList.filter(a => a.status === 'active');
   const disabledAdmins = adminList.filter(a => a.status === 'disabled');
+
+  // Sort admins
+  const sortedActiveAdmins = useSorting(activeAdmins, sortKey, sortDirection, (admin, key) => {
+    if (key === "name") return admin.name;
+    if (key === "role") return admin.role;
+    return "";
+  });
+  
+  const sortedDisabledAdmins = useSorting(disabledAdmins, sortKey, sortDirection, (admin, key) => {
+    if (key === "name") return admin.name;
+    if (key === "role") return admin.role;
+    return "";
+  });
 
   const handleAddAdmin = () => {
     if (!newAdminName.trim() || !newAdminEmail.trim()) return;
@@ -402,16 +424,30 @@ export default function AdminManagementPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Role</TableHead>
+                    <SortableTableHead
+                      sortKey="name"
+                      currentSortKey={sortKey}
+                      currentSortDirection={sortDirection}
+                      onSort={handleSort}
+                    >
+                      Name
+                    </SortableTableHead>
+                    <SortableTableHead
+                      sortKey="role"
+                      currentSortKey={sortKey}
+                      currentSortDirection={sortDirection}
+                      onSort={handleSort}
+                    >
+                      Role
+                    </SortableTableHead>
                     <TableHead>Added On</TableHead>
                     <TableHead>Added By</TableHead>
                     <TableHead className="w-[80px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {activeAdmins.length > 0 ? (
-                    activeAdmins.map((admin) => renderAdminRow(admin, false))
+                  {sortedActiveAdmins.length > 0 ? (
+                    sortedActiveAdmins.map((admin) => renderAdminRow(admin, false))
                   ) : (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
@@ -429,16 +465,30 @@ export default function AdminManagementPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Role</TableHead>
+                    <SortableTableHead
+                      sortKey="name"
+                      currentSortKey={sortKey}
+                      currentSortDirection={sortDirection}
+                      onSort={handleSort}
+                    >
+                      Name
+                    </SortableTableHead>
+                    <SortableTableHead
+                      sortKey="role"
+                      currentSortKey={sortKey}
+                      currentSortDirection={sortDirection}
+                      onSort={handleSort}
+                    >
+                      Role
+                    </SortableTableHead>
                     <TableHead>Added On</TableHead>
                     <TableHead>Added By</TableHead>
                     <TableHead className="w-[80px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {disabledAdmins.length > 0 ? (
-                    disabledAdmins.map((admin) => renderAdminRow(admin, true))
+                  {sortedDisabledAdmins.length > 0 ? (
+                    sortedDisabledAdmins.map((admin) => renderAdminRow(admin, true))
                   ) : (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">

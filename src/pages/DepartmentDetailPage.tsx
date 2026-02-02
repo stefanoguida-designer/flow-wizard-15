@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Building2, Users, Plus, Pencil, Trash2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { SortableTableHead, useSorting, toggleSort, type SortDirection } from "@/components/ui/sortable-table-head";
 
 export default function DepartmentDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -48,6 +49,20 @@ export default function DepartmentDetailPage() {
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
   const [newUnitName, setNewUnitName] = useState("");
   const [newUnitAcronym, setNewUnitAcronym] = useState("");
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+
+  const handleSort = (key: string) => {
+    const result = toggleSort(key, sortKey, sortDirection);
+    setSortKey(result.key);
+    setSortDirection(result.direction);
+  };
+
+  const sortedUnits = useSorting(units, sortKey, sortDirection, (unit, key) => {
+    if (key === "name") return unit.name;
+    if (key === "acronym") return unit.acronym || "";
+    return "";
+  });
 
   if (!department) {
     return (
@@ -209,8 +224,22 @@ export default function DepartmentDetailPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Unit Name</TableHead>
-                  <TableHead>Acronym</TableHead>
+                  <SortableTableHead
+                    sortKey="name"
+                    currentSortKey={sortKey}
+                    currentSortDirection={sortDirection}
+                    onSort={handleSort}
+                  >
+                    Unit Name
+                  </SortableTableHead>
+                  <SortableTableHead
+                    sortKey="acronym"
+                    currentSortKey={sortKey}
+                    currentSortDirection={sortDirection}
+                    onSort={handleSort}
+                  >
+                    Acronym
+                  </SortableTableHead>
                   <TableHead>Users</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Created By</TableHead>
@@ -225,7 +254,7 @@ export default function DepartmentDetailPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  units.map((unit) => (
+                  sortedUnits.map((unit) => (
                     <TableRow key={unit.id}>
                       <TableCell className="font-medium">{unit.name}</TableCell>
                       <TableCell>
