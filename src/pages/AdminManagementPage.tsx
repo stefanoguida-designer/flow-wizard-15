@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { admins, currentUser, activityLogs, type Admin, type AdminRole } from "@/lib/mockData";
+import { useAuth } from "@/contexts/AuthContext";
+import { admins, activityLogs, type Admin, type AdminRole } from "@/lib/mockData";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,6 +62,7 @@ import { Navigate } from "react-router-dom";
 import { SortableTableHead, useSorting, toggleSort, type SortDirection } from "@/components/ui/sortable-table-head";
 
 export default function AdminManagementPage() {
+  const { currentUser, canAccessAdminManagement } = useAuth();
   const [adminList, setAdminList] = useState<Admin[]>(admins);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -76,7 +78,7 @@ export default function AdminManagementPage() {
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
 
   // Only super admins can access this page
-  if (currentUser.role !== 'super_admin') {
+  if (!canAccessAdminManagement) {
     return <Navigate to="/departments" replace />;
   }
 

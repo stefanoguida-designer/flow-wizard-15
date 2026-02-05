@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { useAuth } from "@/contexts/AuthContext";
 import { getUnitsByDepartmentId, getDepartmentById, getUsersByUnitId, type Unit } from "@/lib/mockData";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,7 @@ import { SortableTableHead, useSorting, toggleSort, type SortDirection } from "@
 export default function DepartmentDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { canModify, canDelete } = useAuth();
   const department = getDepartmentById(id || "");
   const [units, setUnits] = useState<Unit[]>(getUnitsByDepartmentId(id || ""));
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -172,52 +174,54 @@ export default function DepartmentDetailPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Units ({units.length})</h2>
-            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Unit
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create New Unit</DialogTitle>
-                  <DialogDescription>
-                    Add a new unit to {department.name}
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="unit-name">Unit Name</Label>
-                    <Input
-                      id="unit-name"
-                      placeholder="e.g., Dublin City Council"
-                      value={newUnitName}
-                      onChange={(e) => setNewUnitName(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="unit-acronym">Acronym (optional)</Label>
-                    <Input
-                      id="unit-acronym"
-                      placeholder="e.g., DCC"
-                      value={newUnitAcronym}
-                      onChange={(e) => setNewUnitAcronym(e.target.value)}
-                      maxLength={10}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      A short abbreviation for the unit name
-                    </p>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
-                    Cancel
+            {canModify && (
+              <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Unit
                   </Button>
-                  <Button onClick={handleCreateUnit}>Create Unit</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create New Unit</DialogTitle>
+                    <DialogDescription>
+                      Add a new unit to {department.name}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="unit-name">Unit Name</Label>
+                      <Input
+                        id="unit-name"
+                        placeholder="e.g., Dublin City Council"
+                        value={newUnitName}
+                        onChange={(e) => setNewUnitName(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="unit-acronym">Acronym (optional)</Label>
+                      <Input
+                        id="unit-acronym"
+                        placeholder="e.g., DCC"
+                        value={newUnitAcronym}
+                        onChange={(e) => setNewUnitAcronym(e.target.value)}
+                        maxLength={10}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        A short abbreviation for the unit name
+                      </p>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleCreateUnit}>Create Unit</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
 
           <Card>
@@ -278,44 +282,48 @@ export default function DepartmentDetailPage() {
                       <TableCell>{unit.createdAt}</TableCell>
                       <TableCell>{unit.createdBy}</TableCell>
                       <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openEditDialog(unit)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Unit</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete "{unit.name}"? This action cannot be undone.
-                                  {unit.usersCount > 0 && (
-                                    <span className="block mt-2 text-destructive">
-                                      Warning: This unit has {unit.usersCount} users who will lose access.
-                                    </span>
-                                  )}
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  onClick={() => handleDeleteUnit(unit)}
-                                >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
+                        {canModify && (
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openEditDialog(unit)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            {canDelete && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Unit</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete "{unit.name}"? This action cannot be undone.
+                                      {unit.usersCount > 0 && (
+                                        <span className="block mt-2 text-destructive">
+                                          Warning: This unit has {unit.usersCount} users who will lose access.
+                                        </span>
+                                      )}
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      onClick={() => handleDeleteUnit(unit)}
+                                    >
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                          </div>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))

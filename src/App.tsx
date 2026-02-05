@@ -3,6 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import RoleSelectionPage from "./pages/RoleSelectionPage";
 import DepartmentsPage from "./pages/DepartmentsPage";
 import DepartmentDetailPage from "./pages/DepartmentDetailPage";
 import UsersPage from "./pages/UsersPage";
@@ -15,22 +17,24 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Navigate to="/departments" replace />} />
-          <Route path="/departments" element={<DepartmentsPage />} />
-          <Route path="/departments/:id" element={<DepartmentDetailPage />} />
-          <Route path="/users" element={<UsersPage />} />
-          <Route path="/activity-logs" element={<ActivityLogsPage />} />
-          <Route path="/allow-list" element={<AllowListPage />} />
-          <Route path="/admin-management" element={<AdminManagementPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<RoleSelectionPage />} />
+            <Route path="/departments" element={<DepartmentsPage />} />
+            <Route path="/departments/:id" element={<DepartmentDetailPage />} />
+            <Route path="/users" element={<UsersPage />} />
+            <Route path="/activity-logs" element={<ActivityLogsPage />} />
+            <Route path="/allow-list" element={<AllowListPage />} />
+            <Route path="/admin-management" element={<AdminManagementPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 

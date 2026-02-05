@@ -1,6 +1,6 @@
-import { Building2, Users, History, ShieldCheck, Settings, ChevronUp, User2, LogOut, ListChecks } from "lucide-react";
-import { NavLink, useLocation } from "react-router-dom";
-import { currentUser } from "@/lib/mockData";
+import { Building2, Users, History, ShieldCheck, Settings, ChevronUp, User2, LogOut, ListChecks, Crown, Shield, Eye } from "lucide-react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Sidebar,
   SidebarContent,
@@ -21,6 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 
 const mainNavItems = [
   { title: "Departments", url: "/departments", icon: Building2 },
@@ -31,8 +32,23 @@ const mainNavItems = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { currentUser, isSuperAdmin, isAdmin, isReadOnly, canAccessAdminManagement, canAccessAllowList } = useAuth();
   const collapsed = state === "collapsed";
-  const isSuperAdmin = currentUser.role === 'super_admin';
+
+  const handleLogout = () => {
+    navigate('/');
+  };
+
+  const getRoleBadge = () => {
+    if (isSuperAdmin) return { label: 'Super Admin', icon: Crown };
+    if (isAdmin) return { label: 'Admin', icon: Shield };
+    return { label: 'Read Only', icon: Eye };
+  };
+
+  const roleBadge = getRoleBadge();
+
+  if (!currentUser) return null;
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -88,8 +104,9 @@ export function AppSidebar() {
                   </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">{currentUser.name}</span>
-                    <span className="truncate text-xs text-muted-foreground">
-                      {isSuperAdmin ? 'Super Admin' : 'Admin'}
+                    <span className="truncate text-xs text-muted-foreground flex items-center gap-1">
+                      <roleBadge.icon className="h-3 w-3" />
+                      {roleBadge.label}
                     </span>
                   </div>
                   <ChevronUp className="ml-auto size-4" />
@@ -106,26 +123,28 @@ export function AppSidebar() {
                   <p className="text-xs text-muted-foreground">{currentUser.email}</p>
                 </div>
                 <DropdownMenuSeparator />
-                {isSuperAdmin && (
-                  <>
-                    <DropdownMenuItem asChild>
-                      <NavLink to="/admin-management" className="flex items-center gap-2 cursor-pointer">
-                        <Settings className="h-4 w-4" />
-                        <span>Manage Admins</span>
-                      </NavLink>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <NavLink to="/allow-list" className="flex items-center gap-2 cursor-pointer">
-                        <ListChecks className="h-4 w-4" />
-                        <span>Allow List</span>
-                      </NavLink>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
+                {canAccessAdminManagement && (
+                  <DropdownMenuItem asChild>
+                    <NavLink to="/admin-management" className="flex items-center gap-2 cursor-pointer">
+                      <Settings className="h-4 w-4" />
+                      <span>Manage Admins</span>
+                    </NavLink>
+                  </DropdownMenuItem>
                 )}
-                <DropdownMenuItem className="text-destructive cursor-pointer">
+                {canAccessAllowList && (
+                  <DropdownMenuItem asChild>
+                    <NavLink to="/allow-list" className="flex items-center gap-2 cursor-pointer">
+                      <ListChecks className="h-4 w-4" />
+                      <span>Allow List</span>
+                    </NavLink>
+                  </DropdownMenuItem>
+                )}
+                {(canAccessAdminManagement || canAccessAllowList) && (
+                  <DropdownMenuSeparator />
+                )}
+                <DropdownMenuItem className="text-destructive cursor-pointer" onClick={handleLogout}>
                   <LogOut className="h-4 w-4 mr-2" />
-                  <span>Log out</span>
+                  <span>Switch User</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
