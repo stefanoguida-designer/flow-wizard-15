@@ -472,6 +472,3 @@ export const allowListedDomains: AllowListedDomain[] = [
   { id: 'wl-5', domain: 'justice.gov.ie', name: 'Justice Department', departmentIds: ['dept-9'], addedAt: '2024-01-08', addedBy: 'Marie O\'Sullivan' },
   { id: 'wl-6', domain: 'gov.ie', name: 'Government of Ireland', departmentIds: ['dept-1', 'dept-2', 'dept-3', 'dept-4', 'dept-5', 'dept-6', 'dept-7', 'dept-8', 'dept-9', 'dept-10'], addedAt: '2023-12-01', addedBy: 'Marie O\'Sullivan' },
 ];
-
-// Current user (for profile dropdown)
-export const currentUser = admins[0]; // Marie O'Sullivan - Super Admin

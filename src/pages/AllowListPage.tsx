@@ -1,5 +1,7 @@
 import { useState, useMemo } from "react";
+import { Navigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { useAuth } from "@/contexts/AuthContext";
 import { allowListedDomains, departments, type AllowListedDomain } from "@/lib/mockData";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,7 +36,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Trash2, Globe, ShieldCheck, Pencil, Building2, Search } from "lucide-react";
+import { Plus, Trash2, Globe, ShieldCheck, Pencil, Building2, Search, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { SortableTableHead, useSorting, toggleSort, type SortDirection } from "@/components/ui/sortable-table-head";
 
@@ -184,12 +186,18 @@ function DomainModal({
 }
 
 export default function AllowListPage() {
+  const { canAccessAllowList, canModifyAllowList } = useAuth();
   const [domains, setDomains] = useState<AllowListedDomain[]>(allowListedDomains);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingDomain, setEditingDomain] = useState<AllowListedDomain | null>(null);
   const [domainToDelete, setDomainToDelete] = useState<AllowListedDomain | null>(null);
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+
+  // Only super admins can access this page
+  if (!canAccessAllowList) {
+    return <Navigate to="/departments" replace />;
+  }
 
   const handleSort = (key: string) => {
     const result = toggleSort(key, sortKey, sortDirection);
@@ -256,7 +264,7 @@ export default function AllowListPage() {
       <div className="space-y-6">
         <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-lg border">
           <div className="p-2 bg-primary/10 rounded-lg text-primary">
-            <ShieldCheck className="h-5 w-5" />
+            {canModifyAllowList ? <ShieldCheck className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
           </div>
           <div>
             <h3 className="font-medium">About Allow List</h3>
@@ -275,10 +283,12 @@ export default function AllowListPage() {
             </p>
           </div>
           
-          <Button onClick={() => setIsAddOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Domain
-          </Button>
+          {canModifyAllowList && (
+            <Button onClick={() => setIsAddOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Domain
+            </Button>
+          )}
         </div>
 
         <Card>
@@ -347,23 +357,27 @@ export default function AllowListPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => setEditingDomain(domain)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => setDomainToDelete(domain)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        {canModifyAllowList ? (
+                          <div className="flex items-center gap-1">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => setEditingDomain(domain)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => setDomainToDelete(domain)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">View only</span>
+                        )}
                       </TableCell>
                     </TableRow>
                   );

@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { useAuth } from "@/contexts/AuthContext";
 import { users, departments, units, getUserActivityLogs, allowListedDomains, type User as UserType, type UserAccess, type UserRole, type UnitRoleAccess } from "@/lib/mockData";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -691,13 +692,17 @@ function UserDetailSheet({
   open, 
   onClose,
   onEditPermissions,
-  onDeleteUser
+  onDeleteUser,
+  canModify,
+  canDelete
 }: { 
   user: UserType | null; 
   open: boolean; 
   onClose: () => void;
   onEditPermissions: (user: UserType) => void;
   onDeleteUser: (user: UserType) => void;
+  canModify: boolean;
+  canDelete: boolean;
 }) {
   const logs = user ? getUserActivityLogs(user.id) : [];
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -771,48 +776,55 @@ function UserDetailSheet({
 
             <Separator />
 
-            {/* Action Buttons */}
-            <div className="flex gap-3">
-              <Button 
-                variant="outline" 
-                className="flex-1"
-                onClick={() => {
-                  onEditPermissions(user);
-                  onClose();
-                }}
-              >
-                <Pencil className="h-4 w-4 mr-2" />
-                Edit Permissions
-              </Button>
-              <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="flex-1">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete User
+            {/* Action Buttons - only show if user can modify */}
+            {canModify && (
+              <>
+                <Separator />
+                <div className="flex gap-3">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => {
+                      onEditPermissions(user);
+                      onClose();
+                    }}
+                  >
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Edit Permissions
                   </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete User</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete "{user.name}"? This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      onClick={() => {
-                        onDeleteUser(user);
-                        onClose();
-                      }}
-                    >
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
+                  {canDelete && (
+                    <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" className="flex-1">
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete User
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete User</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete "{user.name}"? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={() => {
+                              onDeleteUser(user);
+                              onClose();
+                            }}
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+                </div>
+              </>
+            )}
           </TabsContent>
 
           <TabsContent value="activity" className="mt-4">
@@ -948,6 +960,7 @@ function SearchableFilterDropdown({
 
 export default function UsersPage() {
   const [searchParams] = useSearchParams();
+  const { canModify, canDelete, isReadOnly } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState(searchParams.get("department") || "all");
   const [unitFilter, setUnitFilter] = useState(searchParams.get("unit") || "all");
@@ -1131,8 +1144,8 @@ export default function UsersPage() {
 
       {/* Filters and Actions */}
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        {selectedUsers.size > 0 ? (
-          // Bulk Actions Mode
+        {selectedUsers.size > 0 && canDelete ? (
+          // Bulk Actions Mode - only for Super Admin who can delete
           <>
             <div className="flex items-center gap-3 flex-1">
               <Badge variant="secondary" className="px-3 py-1.5">
@@ -1206,19 +1219,21 @@ export default function UsersPage() {
               />
             )}
 
-            <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
-              <DialogTrigger asChild>
-                <Button className="ml-auto">
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Invite User
-                </Button>
-              </DialogTrigger>
-              <InviteUserModal 
-                onClose={() => setIsInviteOpen(false)} 
-                onSave={handleInviteUser}
-                existingUsers={userList}
-              />
-            </Dialog>
+            {canModify && (
+              <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
+                <DialogTrigger asChild>
+                  <Button className="ml-auto">
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Invite User
+                  </Button>
+                </DialogTrigger>
+                <InviteUserModal 
+                  onClose={() => setIsInviteOpen(false)} 
+                  onSave={handleInviteUser}
+                  existingUsers={userList}
+                />
+              </Dialog>
+            )}
           </>
         )}
       </div>
@@ -1314,34 +1329,38 @@ export default function UsersPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-popover" onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenuItem 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditPermissions(user);
-                          }}
-                        >
-                          <Pencil className="h-4 w-4 mr-2" />
-                          Edit permissions
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          className="text-destructive focus:text-destructive"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setUserToDelete(user);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete user
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    {canModify && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-popover" onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenuItem 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditPermissions(user);
+                            }}
+                          >
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Edit permissions
+                          </DropdownMenuItem>
+                          {canDelete && (
+                            <DropdownMenuItem 
+                              className="text-destructive focus:text-destructive"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setUserToDelete(user);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete user
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </TableCell>
                 </TableRow>
               ))
@@ -1357,6 +1376,8 @@ export default function UsersPage() {
         onClose={() => setSelectedUser(null)}
         onEditPermissions={handleEditPermissions}
         onDeleteUser={handleDeleteUser}
+        canModify={canModify}
+        canDelete={canDelete}
       />
 
       {/* Edit Permissions Modal */}
