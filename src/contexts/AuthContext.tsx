@@ -43,6 +43,7 @@ interface AuthContextType {
   canAccessAllowList: boolean;
   canModifyAllowList: boolean;
   canAccessAdminManagement: boolean;
+  canModifyAdminManagement: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -60,12 +61,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const canModify = isSuperAdmin || isAdmin;
   const canDelete = isSuperAdmin;
   
-  // Allow List: Super Admin can modify, Admin/Read Only can only view
-  const canAccessAllowList = isSuperAdmin; // Only super admin can access
+  // Allow List: All users can access, only Super Admin can modify
+  const canAccessAllowList = true;
   const canModifyAllowList = isSuperAdmin;
   
-  // Admin Management: Only Super Admin
-  const canAccessAdminManagement = isSuperAdmin;
+  // Admin Management: All users can access, only Super Admin can modify
+  const canAccessAdminManagement = true;
+  const canModifyAdminManagement = isSuperAdmin;
 
   return (
     <AuthContext.Provider
@@ -80,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         canAccessAllowList,
         canModifyAllowList,
         canAccessAdminManagement,
+        canModifyAdminManagement,
       }}
     >
       {children}
