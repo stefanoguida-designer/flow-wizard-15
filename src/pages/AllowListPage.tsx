@@ -186,7 +186,7 @@ function DomainModal({
 }
 
 export default function AllowListPage() {
-  const { canAccessAllowList, canModifyAllowList } = useAuth();
+  const { canModifyAllowList } = useAuth();
   const [domains, setDomains] = useState<AllowListedDomain[]>(allowListedDomains);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingDomain, setEditingDomain] = useState<AllowListedDomain | null>(null);
@@ -194,11 +194,7 @@ export default function AllowListPage() {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
 
-  // Only super admins can access this page
-  if (!canAccessAllowList) {
-    return <Navigate to="/departments" replace />;
-  }
-
+  const isReadOnly = !canModifyAllowList;
   const handleSort = (key: string) => {
     const result = toggleSort(key, sortKey, sortDirection);
     setSortKey(result.key);
@@ -264,13 +260,14 @@ export default function AllowListPage() {
       <div className="space-y-6">
         <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-lg border">
           <div className="p-2 bg-primary/10 rounded-lg text-primary">
-            {canModifyAllowList ? <ShieldCheck className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            {isReadOnly ? <Eye className="h-5 w-5" /> : <ShieldCheck className="h-5 w-5" />}
           </div>
           <div>
-            <h3 className="font-medium">About Allow List</h3>
+            <h3 className="font-medium">{isReadOnly ? 'View Only Access' : 'About Allow List'}</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              Only users with email addresses from allowed domains can be invited to the platform. 
-              Each domain is associated with specific departments that users can be granted access to.
+              {isReadOnly 
+                ? 'You have read-only access to view allowed domains. Contact a Super Admin to make changes.'
+                : 'Only users with email addresses from allowed domains can be invited to the platform. Each domain is associated with specific departments that users can be granted access to.'}
             </p>
           </div>
         </div>
@@ -283,7 +280,7 @@ export default function AllowListPage() {
             </p>
           </div>
           
-          {canModifyAllowList && (
+          {!isReadOnly && (
             <Button onClick={() => setIsAddOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Add Domain
@@ -357,7 +354,7 @@ export default function AllowListPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {canModifyAllowList ? (
+                        {!isReadOnly ? (
                           <div className="flex items-center gap-1">
                             <Button 
                               variant="ghost" 

@@ -62,7 +62,7 @@ import { Navigate } from "react-router-dom";
 import { SortableTableHead, useSorting, toggleSort, type SortDirection } from "@/components/ui/sortable-table-head";
 
 export default function AdminManagementPage() {
-  const { currentUser, canAccessAdminManagement } = useAuth();
+  const { currentUser, canModifyAdminManagement } = useAuth();
   const [adminList, setAdminList] = useState<Admin[]>(admins);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -77,10 +77,7 @@ export default function AdminManagementPage() {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
 
-  // Only super admins can access this page
-  if (!canAccessAdminManagement) {
-    return <Navigate to="/departments" replace />;
-  }
+  const isReadOnly = !canModifyAdminManagement;
 
   const handleSort = (key: string) => {
     const result = toggleSort(key, sortKey, sortDirection);
@@ -233,75 +230,79 @@ export default function AdminManagementPage() {
       <TableCell>{admin.addedAt}</TableCell>
       <TableCell>{admin.addedBy}</TableCell>
       <TableCell>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-popover">
-            <DropdownMenuItem onClick={(e) => handleEditAdmin(admin, e)}>
-              <Pencil className="h-4 w-4 mr-2" />
-              Edit role
-            </DropdownMenuItem>
-            
-            {isDisabledTab ? (
-              // Disabled tab: Restore option
-              <DropdownMenuItem 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleRestoreAdmin(admin);
-                }}
-              >
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Restore admin
+        {isReadOnly ? (
+          <span className="text-xs text-muted-foreground">View only</span>
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <Button variant="ghost" size="icon">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-popover">
+              <DropdownMenuItem onClick={(e) => handleEditAdmin(admin, e)}>
+                <Pencil className="h-4 w-4 mr-2" />
+                Edit role
               </DropdownMenuItem>
-            ) : (
-              // Active tab: Disable option
-              admin.id !== currentUser.id && (
+              
+              {isDisabledTab ? (
+                // Disabled tab: Restore option
                 <DropdownMenuItem 
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleDisableAdmin(admin);
+                    handleRestoreAdmin(admin);
                   }}
                 >
-                  <Ban className="h-4 w-4 mr-2" />
-                  Disable admin
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Restore admin
                 </DropdownMenuItem>
-              )
-            )}
-            
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <DropdownMenuItem 
-                  className="text-destructive focus:text-destructive"
-                  onSelect={(e) => e.preventDefault()}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete admin
-                </DropdownMenuItem>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Administrator</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to permanently delete "{admin.name}" as an administrator? 
-                    This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    onClick={() => handleRemoveAdmin(admin)}
+              ) : (
+                // Active tab: Disable option
+                admin.id !== currentUser.id && (
+                  <DropdownMenuItem 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDisableAdmin(admin);
+                    }}
                   >
-                    Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </DropdownMenuContent>
-        </DropdownMenu>
+                    <Ban className="h-4 w-4 mr-2" />
+                    Disable admin
+                  </DropdownMenuItem>
+                )
+              )}
+              
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <DropdownMenuItem 
+                    className="text-destructive focus:text-destructive"
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete admin
+                  </DropdownMenuItem>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Administrator</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to permanently delete "{admin.name}" as an administrator? 
+                      This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={() => handleRemoveAdmin(admin)}
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </TableCell>
     </TableRow>
   );
@@ -313,13 +314,14 @@ export default function AdminManagementPage() {
       <div className="space-y-6">
         <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-lg border">
           <div className="p-2 bg-primary/10 rounded-lg text-primary">
-            <ShieldCheck className="h-5 w-5" />
+            {isReadOnly ? <Eye className="h-5 w-5" /> : <ShieldCheck className="h-5 w-5" />}
           </div>
           <div>
-            <h3 className="font-medium">Super Admin Access</h3>
+            <h3 className="font-medium">{isReadOnly ? 'View Only Access' : 'Super Admin Access'}</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              As a Super Admin, you can invite other administrators to help manage the platform. 
-              Admins can manage units and users, while Super Admins can also manage other admins and allow listing.
+              {isReadOnly 
+                ? 'You have read-only access to view platform administrators. Contact a Super Admin to make changes.'
+                : 'As a Super Admin, you can invite other administrators to help manage the platform. Admins can manage units and users, while Super Admins can also manage other admins and allow listing.'}
             </p>
           </div>
         </div>
@@ -332,80 +334,82 @@ export default function AdminManagementPage() {
             </p>
           </div>
           
-          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Invite Admin
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Invite Administrator</DialogTitle>
-                <DialogDescription>
-                  Invite a new administrator to help manage the platform.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="admin-name">Full Name</Label>
-                  <Input
-                    id="admin-name"
-                    placeholder="e.g., John Murphy"
-                    value={newAdminName}
-                    onChange={(e) => setNewAdminName(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="admin-email">Email Address</Label>
-                  <Input
-                    id="admin-email"
-                    type="email"
-                    placeholder="e.g., john.murphy@ogcio.gov.ie"
-                    value={newAdminEmail}
-                    onChange={(e) => setNewAdminEmail(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="admin-role">Role</Label>
-                  <Select value={newAdminRole} onValueChange={(v: AdminRole) => setNewAdminRole(v)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover">
-                      <SelectItem value="read_only">
-                        <div className="flex items-center gap-2">
-                          <Eye className="h-4 w-4" />
-                          <span>Read Only</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="admin">
-                        <div className="flex items-center gap-2">
-                          <Shield className="h-4 w-4" />
-                          <span>Admin</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="super_admin">
-                        <div className="flex items-center gap-2">
-                          <Crown className="h-4 w-4" />
-                          <span>Super Admin</span>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Read Only can view users and access. Admins can manage units and users. Super Admins can also manage other administrators and allow listing.
-                  </p>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsAddOpen(false)}>
-                  Cancel
+          {!isReadOnly && (
+            <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Invite Admin
                 </Button>
-                <Button onClick={handleAddAdmin}>Send Invitation</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Invite Administrator</DialogTitle>
+                  <DialogDescription>
+                    Invite a new administrator to help manage the platform.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="admin-name">Full Name</Label>
+                    <Input
+                      id="admin-name"
+                      placeholder="e.g., John Murphy"
+                      value={newAdminName}
+                      onChange={(e) => setNewAdminName(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="admin-email">Email Address</Label>
+                    <Input
+                      id="admin-email"
+                      type="email"
+                      placeholder="e.g., john.murphy@ogcio.gov.ie"
+                      value={newAdminEmail}
+                      onChange={(e) => setNewAdminEmail(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="admin-role">Role</Label>
+                    <Select value={newAdminRole} onValueChange={(v: AdminRole) => setNewAdminRole(v)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover">
+                        <SelectItem value="read_only">
+                          <div className="flex items-center gap-2">
+                            <Eye className="h-4 w-4" />
+                            <span>Read Only</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="admin">
+                          <div className="flex items-center gap-2">
+                            <Shield className="h-4 w-4" />
+                            <span>Admin</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="super_admin">
+                          <div className="flex items-center gap-2">
+                            <Crown className="h-4 w-4" />
+                            <span>Super Admin</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Read Only can view users and access. Admins can manage units and users. Super Admins can also manage other administrators and allow listing.
+                    </p>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsAddOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleAddAdmin}>Send Invitation</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
 
         {/* Tabs for Active / Disabled Admins */}
