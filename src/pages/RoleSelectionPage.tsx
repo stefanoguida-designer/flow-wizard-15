@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth, simulatedUsers } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -123,6 +123,11 @@ export default function RoleSelectionPage() {
 
         <p className="text-center text-sm text-muted-foreground mt-8">
           This is a demonstration of role-based access control. Select a user to explore their permissions.
+        </p>
+        <p className="text-center mt-3">
+          <Link to="/permissions" className="text-sm text-primary hover:underline">
+            View full permissions reference →
+          </Link>
         </p>
       </div>
     </div>
