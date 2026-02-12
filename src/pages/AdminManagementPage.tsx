@@ -240,10 +240,12 @@ export default function AdminManagementPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-popover">
-              <DropdownMenuItem onClick={(e) => handleEditAdmin(admin, e)}>
-                <Pencil className="h-4 w-4 mr-2" />
-                Edit role
-              </DropdownMenuItem>
+              {!isDisabledTab && (
+                <DropdownMenuItem onClick={(e) => handleEditAdmin(admin, e)}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Edit role
+                </DropdownMenuItem>
+              )}
               
               {isDisabledTab ? (
                 // Disabled tab: Restore option
@@ -271,6 +273,7 @@ export default function AdminManagementPage() {
                 )
               )}
               
+              {admin.id !== currentUser.id && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <DropdownMenuItem 
@@ -300,6 +303,7 @@ export default function AdminManagementPage() {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )}
@@ -308,8 +312,8 @@ export default function AdminManagementPage() {
   );
 
   return (
-    <AppLayout
-      title="Admin Management"
+      <AppLayout
+      title="Team Overview"
     >
       <div className="space-y-6">
         <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-lg border">
