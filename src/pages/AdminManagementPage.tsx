@@ -61,13 +61,20 @@ import { toast } from "sonner";
 import { Navigate } from "react-router-dom";
 import { SortableTableHead, useSorting, toggleSort, type SortDirection } from "@/components/ui/sortable-table-head";
 
+const roleDescriptions: Record<AdminRole, string> = {
+  super_admin: "Full access. Can manage users, units, roles, allow list, and other administrators.",
+  admin: "Can add and edit users and units, but cannot delete records. Read-only access to allow list and team overview.",
+  read_only: "View-only access across the entire platform. Cannot add, edit, or delete any records.",
+};
+
 export default function AdminManagementPage() {
-  const { currentUser, canModifyAdminManagement } = useAuth();
+  const { currentUser, canModifyAdminManagement, isSuperAdmin } = useAuth();
   const [adminList, setAdminList] = useState<Admin[]>(admins);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null);
   const [editRole, setEditRole] = useState<AdminRole>("admin");
+  const [showDowngradeAlert, setShowDowngradeAlert] = useState(false);
   const [newAdminName, setNewAdminName] = useState("");
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [newAdminRole, setNewAdminRole] = useState<AdminRole>("admin");
@@ -173,8 +180,20 @@ export default function AdminManagementPage() {
 
   const handleSaveAdminRole = () => {
     if (!editingAdmin) return;
+    // If super admin is downgrading themselves, show confirmation alert
+    const isDowngradingSelf = editingAdmin.id === currentUser?.id && isSuperAdmin && editRole !== 'super_admin';
+    if (isDowngradingSelf) {
+      setShowDowngradeAlert(true);
+      return;
+    }
+    confirmSaveAdminRole();
+  };
+
+  const confirmSaveAdminRole = () => {
+    if (!editingAdmin) return;
     setAdminList(adminList.map(a => a.id === editingAdmin.id ? { ...a, role: editRole } : a));
     setIsEditOpen(false);
+    setShowDowngradeAlert(false);
     setEditingAdmin(null);
     toast.success(`Role updated for "${editingAdmin.name}"`);
   };
@@ -400,8 +419,8 @@ export default function AdminManagementPage() {
                         </SelectItem>
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-muted-foreground">
-                      Read Only can view users and access. Admins can manage units and users. Super Admins can also manage other administrators and allow listing.
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {roleDescriptions[newAdminRole]}
                     </p>
                   </div>
                 </div>
@@ -646,8 +665,8 @@ export default function AdminManagementPage() {
                   </SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                Read Only can view users and access. Admins can manage units and users. Super Admins can also manage other administrators and allow listing.
+              <p className="text-xs text-muted-foreground mt-1">
+                {roleDescriptions[editRole]}
               </p>
             </div>
           </div>
@@ -659,6 +678,29 @@ export default function AdminManagementPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Downgrade Self Alert */}
+      <AlertDialog open={showDowngradeAlert} onOpenChange={setShowDowngradeAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Downgrade your own role?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to change your role from Super Admin to {editRole === 'admin' ? 'Admin' : 'Read Only'}. 
+              You will lose the ability to manage administrator roles, the allow list, and team settings. 
+              This action can only be reversed by another Super Admin.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={confirmSaveAdminRole}
+            >
+              Confirm Downgrade
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
