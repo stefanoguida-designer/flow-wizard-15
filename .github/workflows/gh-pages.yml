@@ -33,3 +33,6 @@ jobs:
           artifact_name: github-pages
           debug_mode: false
           working_path: ./
+
+      - name: Create 404.html for routing
+        run: cp ./dist/index.html ./dist/404.html
