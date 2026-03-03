@@ -13,7 +13,6 @@ import AllowListPage from "./pages/AllowListPage";
 import AdminManagementPage from "./pages/AdminManagementPage";
 import NotFound from "./pages/NotFound";
 import PermissionsReferencePage from "./pages/PermissionsReferencePage";
-import SurveyPage from "./pages/SurveyPage";
 
 const queryClient = new QueryClient();
 
@@ -23,7 +22,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter basename="/flow-wizard-15">
+        <BrowserRouter>
           <Routes>
             <Route path="/" element={<RoleSelectionPage />} />
             <Route path="/departments" element={<DepartmentsPage />} />
@@ -33,7 +32,6 @@ const App = () => (
             <Route path="/allow-list" element={<AllowListPage />} />
             <Route path="/admin-management" element={<AdminManagementPage />} />
             <Route path="/permissions" element={<PermissionsReferencePage />} />
-            <Route path="/survey" element={<SurveyPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
