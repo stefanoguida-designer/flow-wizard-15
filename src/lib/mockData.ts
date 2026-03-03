@@ -105,28 +105,28 @@ export const units: Unit[] = [
   // Housing Department - 12 units (Local Authorities)
   { id: 'unit-1', name: 'Cork City Council', acronym: 'CCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 4, createdAt: '2024-01-15', createdBy: 'Marie O\'Sullivan' },
   { id: 'unit-2', name: 'Dublin City Council', acronym: 'DCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 5, createdAt: '2024-01-15', createdBy: 'Marie O\'Sullivan' },
-  { id: 'unit-3', name: 'Galway County Council', acronym: 'GCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 3, createdAt: '2024-02-20', createdBy: 'Patrick Murphy' },
-  { id: 'unit-4', name: 'Kilkenny County Council', acronym: 'KCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 2, createdAt: '2024-02-20', createdBy: 'Patrick Murphy' },
+  { id: 'unit-3', name: 'Galway County Council', acronym: 'GCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 3, createdAt: '2024-02-20', createdBy: 'John Murphy' },
+  { id: 'unit-4', name: 'Kilkenny County Council', acronym: 'KCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 2, createdAt: '2024-02-20', createdBy: 'John Murphy' },
   { id: 'unit-5', name: 'Limerick City and County Council', acronym: 'LCCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 3, createdAt: '2024-03-10', createdBy: 'Marie O\'Sullivan' },
   { id: 'unit-6', name: 'Waterford City and County Council', acronym: 'WCCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 2, createdAt: '2024-03-10', createdBy: 'Marie O\'Sullivan' },
-  { id: 'unit-7', name: 'Fingal County Council', acronym: 'FCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 4, createdAt: '2024-03-15', createdBy: 'Patrick Murphy' },
-  { id: 'unit-8', name: 'South Dublin County Council', acronym: 'SDCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 3, createdAt: '2024-03-15', createdBy: 'Patrick Murphy' },
+  { id: 'unit-7', name: 'Fingal County Council', acronym: 'FCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 4, createdAt: '2024-03-15', createdBy: 'John Murphy' },
+  { id: 'unit-8', name: 'South Dublin County Council', acronym: 'SDCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 3, createdAt: '2024-03-15', createdBy: 'John Murphy' },
   { id: 'unit-9', name: 'Dún Laoghaire-Rathdown County Council', acronym: 'DLRCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 3, createdAt: '2024-03-20', createdBy: 'Marie O\'Sullivan' },
   { id: 'unit-10', name: 'Kerry County Council', acronym: 'KeCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 2, createdAt: '2024-04-01', createdBy: 'Sinead Kelly' },
   { id: 'unit-11', name: 'Mayo County Council', acronym: 'MCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 2, createdAt: '2024-04-01', createdBy: 'Sinead Kelly' },
-  { id: 'unit-12', name: 'Wexford County Council', acronym: 'WeCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 2, createdAt: '2024-04-05', createdBy: 'Patrick Murphy' },
+  { id: 'unit-12', name: 'Wexford County Council', acronym: 'WeCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 2, createdAt: '2024-04-05', createdBy: 'John Murphy' },
   
   // Education Department - 10 units
   { id: 'unit-13', name: 'Primary Schools Division', acronym: 'PSD', departmentId: 'dept-2', departmentName: 'Education', usersCount: 4, createdAt: '2024-01-10', createdBy: 'Sinead Kelly' },
   { id: 'unit-14', name: 'Secondary Schools Division', acronym: 'SSD', departmentId: 'dept-2', departmentName: 'Education', usersCount: 3, createdAt: '2024-01-10', createdBy: 'Sinead Kelly' },
   { id: 'unit-15', name: 'Higher Education Division', acronym: 'HED', departmentId: 'dept-2', departmentName: 'Education', usersCount: 3, createdAt: '2024-02-01', createdBy: 'Sinead Kelly' },
   { id: 'unit-16', name: 'Special Education Division', acronym: 'SED', departmentId: 'dept-2', departmentName: 'Education', usersCount: 3, createdAt: '2024-02-15', createdBy: 'Sinead Kelly' },
-  { id: 'unit-17', name: 'Teacher Education Section', acronym: 'TES', departmentId: 'dept-2', departmentName: 'Education', usersCount: 2, createdAt: '2024-02-20', createdBy: 'Patrick Murphy' },
+  { id: 'unit-17', name: 'Teacher Education Section', acronym: 'TES', departmentId: 'dept-2', departmentName: 'Education', usersCount: 2, createdAt: '2024-02-20', createdBy: 'John Murphy' },
   { id: 'unit-18', name: 'Curriculum and Assessment Policy', acronym: 'CAP', departmentId: 'dept-2', departmentName: 'Education', usersCount: 3, createdAt: '2024-03-01', createdBy: 'Sinead Kelly' },
-  { id: 'unit-19', name: 'School Transport Section', acronym: 'STS', departmentId: 'dept-2', departmentName: 'Education', usersCount: 2, createdAt: '2024-03-10', createdBy: 'Patrick Murphy' },
+  { id: 'unit-19', name: 'School Transport Section', acronym: 'STS', departmentId: 'dept-2', departmentName: 'Education', usersCount: 2, createdAt: '2024-03-10', createdBy: 'John Murphy' },
   { id: 'unit-20', name: 'Statistics Section', acronym: 'SS', departmentId: 'dept-2', departmentName: 'Education', usersCount: 2, createdAt: '2024-03-15', createdBy: 'Sinead Kelly' },
   { id: 'unit-21', name: 'International Section', acronym: 'IS', departmentId: 'dept-2', departmentName: 'Education', usersCount: 2, createdAt: '2024-03-20', createdBy: 'Marie O\'Sullivan' },
-  { id: 'unit-22', name: 'ICT Policy Unit', acronym: 'ICTPU', departmentId: 'dept-2', departmentName: 'Education', usersCount: 3, createdAt: '2024-04-01', createdBy: 'Patrick Murphy' },
+  { id: 'unit-22', name: 'ICT Policy Unit', acronym: 'ICTPU', departmentId: 'dept-2', departmentName: 'Education', usersCount: 3, createdAt: '2024-04-01', createdBy: 'John Murphy' },
   
   // Health Department - 15 units
   { id: 'unit-23', name: 'HSE Dublin North', acronym: 'HSEDN', departmentId: 'dept-3', departmentName: 'Health', usersCount: 5, createdAt: '2024-01-05', createdBy: 'Aoife Brennan' },
@@ -160,15 +160,15 @@ export const units: Unit[] = [
   // Justice - 11 units
   { id: 'unit-48', name: 'An Garda Síochána Liaison', acronym: 'AGSL', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 4, createdAt: '2024-01-08', createdBy: 'Marie O\'Sullivan' },
   { id: 'unit-49', name: 'Irish Prison Service', acronym: 'IPS', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 3, createdAt: '2024-01-08', createdBy: 'Marie O\'Sullivan' },
-  { id: 'unit-50', name: 'Courts Service', acronym: 'CoS', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 4, createdAt: '2024-01-15', createdBy: 'Patrick Murphy' },
+  { id: 'unit-50', name: 'Courts Service', acronym: 'CoS', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 4, createdAt: '2024-01-15', createdBy: 'John Murphy' },
   { id: 'unit-51', name: 'Immigration Service', acronym: 'ImS', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 5, createdAt: '2024-01-20', createdBy: 'Marie O\'Sullivan' },
-  { id: 'unit-52', name: 'Legal Aid Board', acronym: 'LAB', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 3, createdAt: '2024-02-01', createdBy: 'Patrick Murphy' },
+  { id: 'unit-52', name: 'Legal Aid Board', acronym: 'LAB', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 3, createdAt: '2024-02-01', createdBy: 'John Murphy' },
   { id: 'unit-53', name: 'Probation Service', acronym: 'PS', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 3, createdAt: '2024-02-10', createdBy: 'Marie O\'Sullivan' },
-  { id: 'unit-54', name: 'Data Protection Unit', acronym: 'DPU', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 2, createdAt: '2024-02-15', createdBy: 'Patrick Murphy' },
+  { id: 'unit-54', name: 'Data Protection Unit', acronym: 'DPU', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 2, createdAt: '2024-02-15', createdBy: 'John Murphy' },
   { id: 'unit-55', name: 'Crime Policy Division', acronym: 'CPD', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 3, createdAt: '2024-02-20', createdBy: 'Marie O\'Sullivan' },
-  { id: 'unit-56', name: 'Civil Law Reform', acronym: 'CLR', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 2, createdAt: '2024-03-01', createdBy: 'Patrick Murphy' },
+  { id: 'unit-56', name: 'Civil Law Reform', acronym: 'CLR', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 2, createdAt: '2024-03-01', createdBy: 'John Murphy' },
   { id: 'unit-57', name: 'International Protection Office', acronym: 'IPO', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 4, createdAt: '2024-03-10', createdBy: 'Marie O\'Sullivan' },
-  { id: 'unit-58', name: 'Coroners Service', acronym: 'CorS', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 2, createdAt: '2024-03-15', createdBy: 'Patrick Murphy' },
+  { id: 'unit-58', name: 'Coroners Service', acronym: 'CorS', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 2, createdAt: '2024-03-15', createdBy: 'John Murphy' },
 ];
 
 // Irish first names and surnames for realistic data
@@ -197,7 +197,7 @@ export const users: User[] = [
   
   { id: 'user-3', name: 'Ciarán Mac Carthaigh', email: generateEmail('Ciarán', 'Mac Carthaigh', 'housing.gov.ie'), access: [
     { departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', fullDepartment: false, unitAccess: [{ unitId: 'unit-3', unitName: 'Galway County Council', role: 'viewer' }, { unitId: 'unit-4', unitName: 'Kilkenny County Council', role: 'editor' }, { unitId: 'unit-5', unitName: 'Limerick City and County Council', role: 'admin' }] }
-  ], addedAt: '2024-02-10', addedBy: 'Patrick Murphy' },
+  ], addedAt: '2024-02-10', addedBy: 'John Murphy' },
   
   { id: 'user-4', name: 'Niamh Ní Dhomhnaill', email: generateEmail('Niamh', 'Ní Dhomhnaill', 'housing.gov.ie'), access: [
     { departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', fullDepartment: false, unitAccess: [{ unitId: 'unit-6', unitName: 'Waterford City and County Council', role: 'editor' }] },
@@ -208,7 +208,7 @@ export const users: User[] = [
     { departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', fullDepartment: false, unitAccess: [{ unitId: 'unit-8', unitName: 'South Dublin County Council', role: 'admin' }] },
     { departmentId: 'dept-3', departmentName: 'Health', fullDepartment: false, unitAccess: [{ unitId: 'unit-33', unitName: 'Mental Health Division', role: 'editor' }, { unitId: 'unit-34', unitName: 'Primary Care Division', role: 'viewer' }] },
     { departmentId: 'dept-9', departmentName: 'Justice', fullDepartment: false, unitAccess: [{ unitId: 'unit-50', unitName: 'Courts Service', role: 'admin' }] }
-  ], addedAt: '2024-03-01', addedBy: 'Patrick Murphy' },
+  ], addedAt: '2024-03-01', addedBy: 'John Murphy' },
   
   { id: 'user-6', name: 'Máire Ní Bhriain', email: generateEmail('Máire', 'Ní Bhriain', 'housing.gov.ie'), access: [
     { departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', fullDepartment: false, unitAccess: [{ unitId: 'unit-9', unitName: 'Dún Laoghaire-Rathdown County Council', role: 'viewer' }, { unitId: 'unit-10', unitName: 'Kerry County Council', role: 'editor' }] }
@@ -217,7 +217,7 @@ export const users: User[] = [
   { id: 'user-7', name: 'Eoin Mac Aoidh', email: generateEmail('Eoin', 'Mac Aoidh', 'housing.gov.ie'), access: [
     { departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', fullDepartment: false, unitAccess: [{ unitId: 'unit-11', unitName: 'Mayo County Council', role: 'editor' }] },
     { departmentId: 'dept-2', departmentName: 'Education', fullDepartment: false, unitAccess: [{ unitId: 'unit-15', unitName: 'Higher Education Division', role: 'admin' }, { unitId: 'unit-16', unitName: 'Special Education Division', role: 'viewer' }] }
-  ], addedAt: '2024-03-15', addedBy: 'Patrick Murphy' },
+  ], addedAt: '2024-03-15', addedBy: 'John Murphy' },
   
   { id: 'user-8', name: 'Síle Ní Mhurchú', email: generateEmail('Síle', 'Ní Mhurchú', 'housing.gov.ie'), access: [
     { departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', fullDepartment: false, unitAccess: [{ unitId: 'unit-12', unitName: 'Wexford County Council', role: 'viewer' }] }
@@ -232,7 +232,7 @@ export const users: User[] = [
     { departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', fullDepartment: false, unitAccess: [{ unitId: 'unit-2', unitName: 'Dublin City Council', role: 'editor' }, { unitId: 'unit-7', unitName: 'Fingal County Council', role: 'admin' }] },
     { departmentId: 'dept-3', departmentName: 'Health', fullDepartment: false, unitAccess: [{ unitId: 'unit-35', unitName: 'Acute Hospitals Division', role: 'viewer' }] },
     { departmentId: 'dept-2', departmentName: 'Education', fullDepartment: false, unitAccess: [{ unitId: 'unit-22', unitName: 'ICT Policy Unit', role: 'editor' }] }
-  ], addedAt: '2024-04-05', addedBy: 'Patrick Murphy' },
+  ], addedAt: '2024-04-05', addedBy: 'John Murphy' },
   
   // Education Department users with cross-department access
   { id: 'user-11', name: 'Oisín Ó Néill', email: generateEmail('Oisín', 'Ó Néill', 'education.gov.ie'), access: [
@@ -242,7 +242,7 @@ export const users: User[] = [
   { id: 'user-12', name: 'Siobhán Ní Riain', email: generateEmail('Siobhán', 'Ní Riain', 'education.gov.ie'), access: [
     { departmentId: 'dept-2', departmentName: 'Education', fullDepartment: false, unitAccess: [{ unitId: 'unit-13', unitName: 'Primary Schools Division', role: 'editor' }, { unitId: 'unit-14', unitName: 'Secondary Schools Division', role: 'admin' }] },
     { departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', fullDepartment: false, unitAccess: [{ unitId: 'unit-2', unitName: 'Dublin City Council', role: 'viewer' }] }
-  ], addedAt: '2024-02-05', addedBy: 'Patrick Murphy' },
+  ], addedAt: '2024-02-05', addedBy: 'John Murphy' },
   
   { id: 'user-13', name: 'Cormac Mac Giolla', email: generateEmail('Cormac', 'Mac Giolla', 'education.gov.ie'), access: [
     { departmentId: 'dept-2', departmentName: 'Education', fullDepartment: false, unitAccess: [{ unitId: 'unit-15', unitName: 'Higher Education Division', role: 'viewer' }] },
@@ -251,7 +251,7 @@ export const users: User[] = [
   
   { id: 'user-14', name: 'Áine Ní Shé', email: generateEmail('Áine', 'Ní Shé', 'education.gov.ie'), access: [
     { departmentId: 'dept-2', departmentName: 'Education', fullDepartment: false, unitAccess: [{ unitId: 'unit-16', unitName: 'Special Education Division', role: 'editor' }, { unitId: 'unit-17', unitName: 'Teacher Education Section', role: 'viewer' }] }
-  ], addedAt: '2024-02-25', addedBy: 'Patrick Murphy' },
+  ], addedAt: '2024-02-25', addedBy: 'John Murphy' },
   
   { id: 'user-15', name: 'Fionn Ó Dónaill', email: generateEmail('Fionn', 'Ó Dónaill', 'education.gov.ie'), access: [
     { departmentId: 'dept-2', departmentName: 'Education', fullDepartment: false, unitAccess: [{ unitId: 'unit-18', unitName: 'Curriculum and Assessment Policy', role: 'admin' }] },
@@ -265,7 +265,7 @@ export const users: User[] = [
   
   { id: 'user-17', name: 'Darragh Ó Murchú', email: generateEmail('Darragh', 'Ó Murchú', 'education.gov.ie'), access: [
     { departmentId: 'dept-2', departmentName: 'Education', fullDepartment: false, unitAccess: [{ unitId: 'unit-21', unitName: 'International Section', role: 'editor' }] }
-  ], addedAt: '2024-03-25', addedBy: 'Patrick Murphy' },
+  ], addedAt: '2024-03-25', addedBy: 'John Murphy' },
   
   { id: 'user-18', name: 'Róisín Ní Ghrádaigh', email: generateEmail('Róisín', 'Ní Ghrádaigh', 'education.gov.ie'), access: [
     { departmentId: 'dept-2', departmentName: 'Education', fullDepartment: false, unitAccess: [{ unitId: 'unit-22', unitName: 'ICT Policy Unit', role: 'admin' }] },
@@ -375,7 +375,7 @@ export const users: User[] = [
   { id: 'user-40', name: 'Bríd Ní Cheallaigh', email: generateEmail('Bríd', 'Ní Cheallaigh', 'justice.gov.ie'), access: [
     { departmentId: 'dept-9', departmentName: 'Justice', fullDepartment: false, unitAccess: [{ unitId: 'unit-48', unitName: 'An Garda Síochána Liaison', role: 'editor' }, { unitId: 'unit-49', unitName: 'Irish Prison Service', role: 'admin' }] },
     { departmentId: 'dept-4', departmentName: 'Social Protection', fullDepartment: false, unitAccess: [{ unitId: 'unit-43', unitName: 'Jobseeker Services', role: 'viewer' }] }
-  ], addedAt: '2024-02-01', addedBy: 'Patrick Murphy' },
+  ], addedAt: '2024-02-01', addedBy: 'John Murphy' },
   
   { id: 'user-41', name: 'Seán Ó Murchú', email: generateEmail('Seán', 'Ó Murchú', 'justice.gov.ie'), access: [
     { departmentId: 'dept-9', departmentName: 'Justice', fullDepartment: false, unitAccess: [{ unitId: 'unit-50', unitName: 'Courts Service', role: 'viewer' }] }
@@ -385,7 +385,7 @@ export const users: User[] = [
     { departmentId: 'dept-9', departmentName: 'Justice', fullDepartment: false, unitAccess: [{ unitId: 'unit-51', unitName: 'Immigration Service', role: 'editor' }, { unitId: 'unit-52', unitName: 'Legal Aid Board', role: 'viewer' }] },
     { departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', fullDepartment: false, unitAccess: [{ unitId: 'unit-2', unitName: 'Dublin City Council', role: 'admin' }] },
     { departmentId: 'dept-3', departmentName: 'Health', fullDepartment: false, unitAccess: [{ unitId: 'unit-51', unitName: 'Immigration Service', role: 'viewer' }] }
-  ], addedAt: '2024-03-01', addedBy: 'Patrick Murphy' },
+  ], addedAt: '2024-03-01', addedBy: 'John Murphy' },
   
   { id: 'user-43', name: 'Ciarán Ó Flannagáin', email: generateEmail('Ciarán', 'Ó Flannagáin', 'justice.gov.ie'), access: [
     { departmentId: 'dept-9', departmentName: 'Justice', fullDepartment: false, unitAccess: [{ unitId: 'unit-53', unitName: 'Probation Service', role: 'admin' }] }
@@ -394,7 +394,7 @@ export const users: User[] = [
   { id: 'user-44', name: 'Niamh Ní Mhaoláin', email: generateEmail('Niamh', 'Ní Mhaoláin', 'justice.gov.ie'), access: [
     { departmentId: 'dept-9', departmentName: 'Justice', fullDepartment: false, unitAccess: [{ unitId: 'unit-54', unitName: 'Data Protection Unit', role: 'viewer' }, { unitId: 'unit-55', unitName: 'Crime Policy Division', role: 'editor' }] },
     { departmentId: 'dept-2', departmentName: 'Education', fullDepartment: true, fullDepartmentRole: 'viewer', unitAccess: [] }
-  ], addedAt: '2024-04-01', addedBy: 'Patrick Murphy' },
+  ], addedAt: '2024-04-01', addedBy: 'John Murphy' },
 ];
 
 // Helper functions
@@ -424,12 +424,12 @@ export const activityLogs: ActivityLog[] = [
   { id: 'log-2', action: 'unit_created', description: 'Created unit "Cork City Council" in Housing, Local Government and Heritage', performedBy: 'Marie O\'Sullivan', performedByEmail: 'marie.osullivan@gov.ie', timestamp: '2024-01-15T10:15:00', targetType: 'unit', targetName: 'Cork City Council' },
   { id: 'log-3', action: 'unit_created', description: 'Created unit "Dublin City Council" in Housing, Local Government and Heritage', performedBy: 'Marie O\'Sullivan', performedByEmail: 'marie.osullivan@gov.ie', timestamp: '2024-01-15T10:20:00', targetType: 'unit', targetName: 'Dublin City Council' },
   { id: 'log-4', action: 'user_invited', description: 'Invited Oisín Ó Néill to Education with full access', performedBy: 'Sinead Kelly', performedByEmail: 'sinead.kelly@gov.ie', timestamp: '2024-01-20T14:00:00', targetType: 'user', targetName: 'Oisín Ó Néill' },
-  { id: 'log-5', action: 'admin_invited', description: 'Added Patrick Murphy as Admin', performedBy: 'Marie O\'Sullivan', performedByEmail: 'marie.osullivan@gov.ie', timestamp: '2024-01-22T11:30:00', targetType: 'admin', targetName: 'Patrick Murphy' },
+  { id: 'log-5', action: 'admin_invited', description: 'Added John Murphy as Admin', performedBy: 'Marie O\'Sullivan', performedByEmail: 'marie.osullivan@gov.ie', timestamp: '2024-01-22T11:30:00', targetType: 'admin', targetName: 'John Murphy' },
   { id: 'log-6', action: 'allowlist_added', description: 'Added domain "housing.gov.ie" to allow list', performedBy: 'Marie O\'Sullivan', performedByEmail: 'marie.osullivan@gov.ie', timestamp: '2024-01-10T09:00:00', targetType: 'allowlist', targetName: 'housing.gov.ie' },
   { id: 'log-7', action: 'user_invited', description: 'Invited Aoife Ní Chonchúir to Housing with access to Cork City Council, Dublin City Council', performedBy: 'Marie O\'Sullivan', performedByEmail: 'marie.osullivan@gov.ie', timestamp: '2024-02-01T10:00:00', targetType: 'user', targetName: 'Aoife Ní Chonchúir' },
   { id: 'log-8', action: 'unit_created', description: 'Created unit "Primary Schools Division" in Education', performedBy: 'Sinead Kelly', performedByEmail: 'sinead.kelly@gov.ie', timestamp: '2024-01-10T15:00:00', targetType: 'unit', targetName: 'Primary Schools Division' },
-  { id: 'log-9', action: 'access_granted', description: 'Granted Siobhán Ní Riain access to Primary Schools Division, Secondary Schools Division', performedBy: 'Patrick Murphy', performedByEmail: 'patrick.murphy@gov.ie', timestamp: '2024-02-05T09:45:00', targetType: 'user', targetName: 'Siobhán Ní Riain' },
-  { id: 'log-10', action: 'user_invited', description: 'Invited Ciarán Mac Carthaigh with access to multiple units in Housing', performedBy: 'Patrick Murphy', performedByEmail: 'patrick.murphy@gov.ie', timestamp: '2024-02-10T11:00:00', targetType: 'user', targetName: 'Ciarán Mac Carthaigh' },
+  { id: 'log-9', action: 'access_granted', description: 'Granted Siobhán Ní Riain access to Primary Schools Division, Secondary Schools Division', performedBy: 'John Murphy', performedByEmail: 'john.murphy@gov.ie', timestamp: '2024-02-05T09:45:00', targetType: 'user', targetName: 'Siobhán Ní Riain' },
+  { id: 'log-10', action: 'user_invited', description: 'Invited Ciarán Mac Carthaigh with access to multiple units in Housing', performedBy: 'John Murphy', performedByEmail: 'john.murphy@gov.ie', timestamp: '2024-02-10T11:00:00', targetType: 'user', targetName: 'Ciarán Mac Carthaigh' },
   { id: 'log-11', action: 'unit_renamed', description: 'Renamed "HSE Dublin" to "HSE Dublin North"', performedBy: 'Aoife Brennan', performedByEmail: 'aoife.brennan@gov.ie', timestamp: '2024-02-12T14:30:00', targetType: 'unit', targetName: 'HSE Dublin North' },
   { id: 'log-12', action: 'user_invited', description: 'Invited Conor Ó Flannagáin to Health with full access', performedBy: 'Aoife Brennan', performedByEmail: 'aoife.brennan@gov.ie', timestamp: '2024-01-10T10:30:00', targetType: 'user', targetName: 'Conor Ó Flannagáin' },
   { id: 'log-13', action: 'access_revoked', description: 'Revoked access to HSE Kerry from Brendan Ó hEachthairn', performedBy: 'Declan Walsh', performedByEmail: 'declan.walsh@gov.ie', timestamp: '2024-03-05T16:00:00', targetType: 'user', targetName: 'Brendan Ó hEachthairn' },
@@ -438,7 +438,7 @@ export const activityLogs: ActivityLog[] = [
   { id: 'log-16', action: 'allowlist_added', description: 'Added domain "education.gov.ie" to allow list', performedBy: 'Marie O\'Sullivan', performedByEmail: 'marie.osullivan@gov.ie', timestamp: '2024-01-08T14:00:00', targetType: 'allowlist', targetName: 'education.gov.ie' },
   { id: 'log-17', action: 'user_invited', description: 'Invited Fergus Ó Briain to Social Protection with full access', performedBy: 'Declan Walsh', performedByEmail: 'declan.walsh@gov.ie', timestamp: '2024-01-25T10:00:00', targetType: 'user', targetName: 'Fergus Ó Briain' },
   { id: 'log-18', action: 'user_invited', description: 'Invited Tomás Ó Dónaill to Justice with full access', performedBy: 'Marie O\'Sullivan', performedByEmail: 'marie.osullivan@gov.ie', timestamp: '2024-01-15T15:30:00', targetType: 'user', targetName: 'Tomás Ó Dónaill' },
-  { id: 'log-19', action: 'access_granted', description: 'Granted Bríd Ní Cheallaigh access to An Garda Síochána Liaison, Irish Prison Service', performedBy: 'Patrick Murphy', performedByEmail: 'patrick.murphy@gov.ie', timestamp: '2024-02-01T14:15:00', targetType: 'user', targetName: 'Bríd Ní Cheallaigh' },
+  { id: 'log-19', action: 'access_granted', description: 'Granted Bríd Ní Cheallaigh access to An Garda Síochána Liaison, Irish Prison Service', performedBy: 'John Murphy', performedByEmail: 'john.murphy@gov.ie', timestamp: '2024-02-01T14:15:00', targetType: 'user', targetName: 'Bríd Ní Cheallaigh' },
   { id: 'log-20', action: 'allowlist_removed', description: 'Removed domain "temp-contractor.ie" from allow list', performedBy: 'Marie O\'Sullivan', performedByEmail: 'marie.osullivan@gov.ie', timestamp: '2024-03-15T09:30:00', targetType: 'allowlist', targetName: 'temp-contractor.ie' },
 ];
 
@@ -456,7 +456,7 @@ export function getUserActivityLogs(userId: string): ActivityLog[] {
 // Admins data
 export const admins: Admin[] = [
   { id: 'admin-1', name: 'Marie O\'Sullivan', email: 'marie.osullivan@gov.ie', role: 'super_admin', status: 'active', addedAt: '2023-06-15', addedBy: 'System' },
-  { id: 'admin-2', name: 'Patrick Murphy', email: 'patrick.murphy@gov.ie', role: 'admin', status: 'active', addedAt: '2024-01-22', addedBy: 'Marie O\'Sullivan' },
+  { id: 'admin-2', name: 'John Murphy', email: 'john.murphy@gov.ie', role: 'admin', status: 'active', addedAt: '2024-01-22', addedBy: 'Marie O\'Sullivan' },
   { id: 'admin-3', name: 'Sinead Kelly', email: 'sinead.kelly@gov.ie', role: 'admin', status: 'active', addedAt: '2024-02-10', addedBy: 'Marie O\'Sullivan' },
   { id: 'admin-4', name: 'Aoife Brennan', email: 'aoife.brennan@gov.ie', role: 'super_admin', status: 'active', addedAt: '2023-08-01', addedBy: 'Marie O\'Sullivan' },
   { id: 'admin-5', name: 'Declan Walsh', email: 'declan.walsh@gov.ie', role: 'admin', status: 'disabled', addedAt: '2024-03-01', addedBy: 'Aoife Brennan' },

@@ -14,8 +14,8 @@ export const simulatedUsers: Admin[] = [
   },
   {
     id: 'admin-2',
-    name: 'Patrick Murphy',
-    email: 'patrick.murphy@ogcio.gov.ie',
+    name: 'John Murphy',
+    email: 'john.murphy@ogcio.gov.ie',
     role: 'admin',
     status: 'active',
     addedAt: '2024-01-15',
