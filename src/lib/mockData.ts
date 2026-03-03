@@ -160,15 +160,15 @@ export const units: Unit[] = [
   // Justice - 11 units
   { id: 'unit-48', name: 'An Garda Síochána Liaison', acronym: 'AGSL', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 4, createdAt: '2024-01-08', createdBy: 'Marie O\'Sullivan' },
   { id: 'unit-49', name: 'Irish Prison Service', acronym: 'IPS', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 3, createdAt: '2024-01-08', createdBy: 'Marie O\'Sullivan' },
-  { id: 'unit-50', name: 'Courts Service', acronym: 'CoS', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 4, createdAt: '2024-01-15', createdBy: 'Patrick Murphy' },
+  { id: 'unit-50', name: 'Courts Service', acronym: 'CoS', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 4, createdAt: '2024-01-15', createdBy: 'John Murphy' },
   { id: 'unit-51', name: 'Immigration Service', acronym: 'ImS', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 5, createdAt: '2024-01-20', createdBy: 'Marie O\'Sullivan' },
-  { id: 'unit-52', name: 'Legal Aid Board', acronym: 'LAB', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 3, createdAt: '2024-02-01', createdBy: 'Patrick Murphy' },
+  { id: 'unit-52', name: 'Legal Aid Board', acronym: 'LAB', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 3, createdAt: '2024-02-01', createdBy: 'John Murphy' },
   { id: 'unit-53', name: 'Probation Service', acronym: 'PS', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 3, createdAt: '2024-02-10', createdBy: 'Marie O\'Sullivan' },
-  { id: 'unit-54', name: 'Data Protection Unit', acronym: 'DPU', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 2, createdAt: '2024-02-15', createdBy: 'Patrick Murphy' },
+  { id: 'unit-54', name: 'Data Protection Unit', acronym: 'DPU', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 2, createdAt: '2024-02-15', createdBy: 'John Murphy' },
   { id: 'unit-55', name: 'Crime Policy Division', acronym: 'CPD', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 3, createdAt: '2024-02-20', createdBy: 'Marie O\'Sullivan' },
-  { id: 'unit-56', name: 'Civil Law Reform', acronym: 'CLR', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 2, createdAt: '2024-03-01', createdBy: 'Patrick Murphy' },
+  { id: 'unit-56', name: 'Civil Law Reform', acronym: 'CLR', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 2, createdAt: '2024-03-01', createdBy: 'John Murphy' },
   { id: 'unit-57', name: 'International Protection Office', acronym: 'IPO', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 4, createdAt: '2024-03-10', createdBy: 'Marie O\'Sullivan' },
-  { id: 'unit-58', name: 'Coroners Service', acronym: 'CorS', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 2, createdAt: '2024-03-15', createdBy: 'Patrick Murphy' },
+  { id: 'unit-58', name: 'Coroners Service', acronym: 'CorS', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 2, createdAt: '2024-03-15', createdBy: 'John Murphy' },
 ];
 
 // Irish first names and surnames for realistic data
