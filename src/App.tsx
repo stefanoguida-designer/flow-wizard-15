@@ -13,6 +13,7 @@ import AllowListPage from "./pages/AllowListPage";
 import AdminManagementPage from "./pages/AdminManagementPage";
 import NotFound from "./pages/NotFound";
 import PermissionsReferencePage from "./pages/PermissionsReferencePage";
+import SurveyPage from "./pages/SurveyPage";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/allow-list" element={<AllowListPage />} />
             <Route path="/admin-management" element={<AdminManagementPage />} />
             <Route path="/permissions" element={<PermissionsReferencePage />} />
+            <Route path="/survey" element={<SurveyPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
