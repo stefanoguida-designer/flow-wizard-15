@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
-import { users, departments, units, getUserActivityLogs, allowListedDomains, BUILDING_BLOCK_IDS, type User as UserType, type UserAccess, type UserRole, type UnitRoleAccess, type BuildingBlockAssignment } from "@/lib/mockData";
+import { users, teams, units, getUserActivityLogs, allowListedDomains, BUILDING_BLOCK_IDS, type User as UserType, type UserAccess, type UserRole, type UnitRoleAccess, type BuildingBlockAssignment } from "@/lib/mockData";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,8 +10,6 @@ import { Label } from "@/components/ui/label";
 import { SortableTableHead, useSorting, toggleSort, type SortDirection } from "@/components/ui/sortable-table-head";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import {
   Table,
@@ -33,7 +31,6 @@ import {
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
@@ -82,7 +79,6 @@ import {
   ChevronDown, 
   ChevronRight, 
   Building2, 
-  Mail, 
   Calendar,
   History,
   User as UserIcon,
@@ -96,64 +92,72 @@ import {
   ChevronsUpDown
 } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-// Step indicator for wizards: pills + labels, completed steps clickable, current highlighted
+// Step indicator: flat tabs with bottom border; visited steps navigable; unvisited muted & inert
 function StepIndicator({
   steps,
   currentStep,
+  maxVisitedStep,
   onStepClick,
 }: {
   steps: { label: string }[];
   currentStep: number;
+  maxVisitedStep: number;
   onStepClick: (step: number) => void;
 }) {
   return (
-    <div className="flex items-center gap-2 flex-shrink-0 mb-4">
+    <div
+      className="mb-3 flex w-full shrink-0 border-b border-border"
+      role="tablist"
+      aria-label="Wizard steps"
+    >
       {steps.map((step, index) => {
-        const isCompleted = index < currentStep;
         const isCurrent = index === currentStep;
-        const clickable = isCompleted;
+        const isVisited = index <= maxVisitedStep;
+        const clickable = isVisited && !isCurrent;
         return (
-          <div key={index} className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => clickable && onStepClick(index)}
-              className={cn(
-                "flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
-                isCurrent && "bg-primary text-primary-foreground",
-                isCompleted && !isCurrent && "bg-primary/20 text-primary hover:bg-primary/30",
-                !isCurrent && !isCompleted && "bg-muted text-muted-foreground"
-              )}
-            >
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-current/20 text-xs">
-                {index + 1}
-              </span>
-              {step.label}
-            </button>
-            {index < steps.length - 1 && (
-              <div className="h-px w-4 bg-border" aria-hidden />
+          <button
+            key={index}
+            type="button"
+            role="tab"
+            aria-selected={isCurrent}
+            aria-current={isCurrent ? "step" : undefined}
+            disabled={!isCurrent && !isVisited}
+            onClick={() => clickable && onStepClick(index)}
+            className={cn(
+              "relative flex-1 px-2 py-2.5 text-center text-sm font-medium transition-colors",
+              "border-b-2 -mb-px rounded-none bg-transparent",
+              isCurrent && "z-[1] border-primary text-foreground",
+              !isCurrent && isVisited &&
+                "cursor-pointer border-transparent text-muted-foreground hover:text-foreground",
+              !isCurrent && !isVisited &&
+                "cursor-not-allowed border-transparent text-muted-foreground/40"
             )}
-          </div>
+          >
+            <span className="tabular-nums text-muted-foreground">{index + 1}.</span>{" "}
+            <span className="whitespace-normal break-words sm:whitespace-nowrap">{step.label}</span>
+          </button>
         );
       })}
     </div>
   );
 }
 
-// Selection: either full department or a single unit (mutually exclusive per department)
+// Selection: either full team or a single unit (mutually exclusive per team)
 type WizardSelection =
-  | { type: "department"; departmentId: string; name: string }
-  | { type: "unit"; departmentId: string; unitId: string; name: string };
+  | { type: "team"; teamId: string; name: string }
+  | { type: "unit"; teamId: string; unitId: string; name: string };
 
 function selectionKey(s: WizardSelection): string {
-  return s.type === "department" ? `dept-${s.departmentId}` : `unit-${s.unitId}`;
+  return s.type === "team" ? `team-${s.teamId}` : `unit-${s.unitId}`;
 }
 
-// Get department abbreviation helper
-function getDeptAbbreviation(departmentName: string): string {
-  const dept = departments.find(d => d.name === departmentName);
-  return dept?.abbreviation || departmentName;
+// Get team abbreviation helper
+function getTeamAbbreviation(teamName: string): string {
+  const dept = teams.find(d => d.name === teamName);
+  return dept?.abbreviation || teamName;
 }
 
 // Access Tag Component - clicking opens the sidebar
@@ -164,9 +168,9 @@ function AccessTag({
   access: UserAccess; 
   onClick: () => void;
 }) {
-  const abbreviation = getDeptAbbreviation(access.departmentName);
+  const abbreviation = getTeamAbbreviation(access.teamName);
 
-  if (access.fullDepartment) {
+  if (access.fullTeam) {
     return (
       <Badge className="bg-primary text-primary-foreground">
         {abbreviation}
@@ -176,7 +180,7 @@ function AccessTag({
 
   const unitCount = access.unitAccess.length;
 
-  // Show department abbreviation + unit count (e.g., "DE - 2 units")
+  // Show team abbreviation + unit count (e.g., "DE - 2 units")
   return (
     <Badge 
       variant="outline" 
@@ -209,27 +213,38 @@ function RoleBadge({ role }: { role: UserRole }) {
 
 // Type for modal state: tracks per-unit roles (used when converting wizard state to UserAccess)
 type ModalAccessState = Map<string, {
-  fullDepartment: boolean;
-  fullDepartmentRole?: UserRole;
-  fullDepartmentBuildingBlocks?: BuildingBlockAssignment[];
+  fullTeam: boolean;
+  fullTeamRole?: UserRole;
+  fullTeamBuildingBlocks?: BuildingBlockAssignment[];
   unitRoles: Map<string, UserRole>;
   unitBuildingBlocks?: Map<string, BuildingBlockAssignment[]>;
 }>;
 
 // Edit User Permissions Modal — 2-step wizard
 function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClose: () => void; onSave: (user: UserType, access: ModalAccessState) => void }) {
-  const steps = [{ label: "Units" }, { label: "Building blocks & roles" }];
+  const steps = [{ label: "Identity & units" }, { label: "Building blocks & roles" }];
+  const lastStepIndex = steps.length - 1;
   const [step, setStep] = useState(0);
+  const [maxVisitedStep, setMaxVisitedStep] = useState(lastStepIndex);
+  const [displayName, setDisplayName] = useState(user.name);
   const [permissionsSearch, setPermissionsSearch] = useState("");
+
+  useEffect(() => {
+    setMaxVisitedStep((m) => Math.max(m, step));
+  }, [step]);
+
+  useEffect(() => {
+    setDisplayName(user.name);
+  }, [user.id, user.name]);
 
   const initialSelections = useMemo(() => {
     const list: WizardSelection[] = [];
     user.access.forEach((a) => {
-      if (a.fullDepartment) {
-        list.push({ type: "department", departmentId: a.departmentId, name: a.departmentName });
+      if (a.fullTeam) {
+        list.push({ type: "team", teamId: a.teamId, name: a.teamName });
       } else {
         a.unitAccess.forEach((ua) => {
-          list.push({ type: "unit", departmentId: a.departmentId, unitId: ua.unitId, name: ua.unitName });
+          list.push({ type: "unit", teamId: a.teamId, unitId: ua.unitId, name: ua.unitName });
         });
       }
     });
@@ -239,8 +254,8 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
   const initialBuildingBlocks = useMemo(() => {
     const map = new Map<string, BuildingBlockAssignment[]>();
     user.access.forEach((a) => {
-      if (a.fullDepartment && a.fullDepartmentBuildingBlocks?.length) {
-        map.set(`dept-${a.departmentId}`, a.fullDepartmentBuildingBlocks);
+      if (a.fullTeam && a.fullTeamBuildingBlocks?.length) {
+        map.set(`team-${a.teamId}`, a.fullTeamBuildingBlocks);
       }
       a.unitAccess.forEach((ua) => {
         if (ua.buildingBlocks?.length) {
@@ -255,20 +270,20 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
   const [allSelections, setAllSelections] = useState<WizardSelection[]>(initialSelections);
   const [buildingBlocksByKey, setBuildingBlocksByKey] = useState<Map<string, BuildingBlockAssignment[]>>(initialBuildingBlocks);
 
-  const filteredDepartments = useMemo(() => {
-    if (!permissionsSearch) return departments;
+  const filteredTeams = useMemo(() => {
+    if (!permissionsSearch) return teams;
     const query = permissionsSearch.toLowerCase();
-    return departments.filter((d) =>
+    return teams.filter((d) =>
       d.name.toLowerCase().includes(query) ||
       d.abbreviation.toLowerCase().includes(query) ||
-      units.filter((u) => u.departmentId === d.id).some((u) => u.name.toLowerCase().includes(query))
+      units.filter((u) => u.teamId === d.id).some((u) => u.name.toLowerCase().includes(query))
     );
   }, [permissionsSearch]);
 
-  const toggleDepartment = (deptId: string) => {
-    const key = `dept-${deptId}`;
-    const dept = departments.find((d) => d.id === deptId);
-    const deptUnits = units.filter((u) => u.departmentId === deptId);
+  const toggleTeam = (deptId: string) => {
+    const key = `team-${deptId}`;
+    const dept = teams.find((d) => d.id === deptId);
+    const deptUnits = units.filter((u) => u.teamId === deptId);
     setActiveKeys((prev) => {
       const next = new Set(prev);
       if (next.has(key)) {
@@ -278,7 +293,7 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
         deptUnits.forEach((u) => next.delete(`unit-${u.id}`));
         next.add(key);
         if (dept && !allSelections.some((s) => selectionKey(s) === key)) {
-          setAllSelections((s) => [...s, { type: "department", departmentId: deptId, name: dept.name }]);
+          setAllSelections((s) => [...s, { type: "team", teamId: deptId, name: dept.name }]);
         }
       }
       return next;
@@ -287,7 +302,7 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
 
   const toggleUnit = (deptId: string, unitId: string) => {
     const unitKey = `unit-${unitId}`;
-    const deptKey = `dept-${deptId}`;
+    const deptKey = `team-${deptId}`;
     const unit = units.find((u) => u.id === unitId);
     setActiveKeys((prev) => {
       const next = new Set(prev);
@@ -297,14 +312,14 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
         next.delete(deptKey);
         next.add(unitKey);
         if (unit && !allSelections.some((s) => selectionKey(s) === unitKey)) {
-          setAllSelections((s) => [...s, { type: "unit", departmentId: deptId, unitId, name: unit.name }]);
+          setAllSelections((s) => [...s, { type: "unit", teamId: deptId, unitId, name: unit.name }]);
         }
       }
       return next;
     });
   };
 
-  const isDeptSelected = (deptId: string) => activeKeys.has(`dept-${deptId}`);
+  const isDeptSelected = (deptId: string) => activeKeys.has(`team-${deptId}`);
   const isUnitSelected = (unitId: string) => activeKeys.has(`unit-${unitId}`);
 
   const activeSelections = useMemo(
@@ -359,22 +374,22 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
     activeSelections.forEach((s) => {
       const key = selectionKey(s);
       const blocks = buildingBlocksByKey.get(key) ?? [];
-      if (s.type === "department") {
-        const existing = access.get(s.departmentId);
-        const dept = departments.find((d) => d.id === s.departmentId);
+      if (s.type === "team") {
+        const existing = access.get(s.teamId);
+        const dept = teams.find((d) => d.id === s.teamId);
         if (dept) {
-          access.set(s.departmentId, {
-            fullDepartment: true,
-            fullDepartmentRole: "viewer",
-            fullDepartmentBuildingBlocks: blocks,
+          access.set(s.teamId, {
+            fullTeam: true,
+            fullTeamRole: "viewer",
+            fullTeamBuildingBlocks: blocks,
             unitRoles: new Map(),
           });
         }
       } else {
-        const dept = departments.find((d) => d.id === s.departmentId);
+        const dept = teams.find((d) => d.id === s.teamId);
         if (!dept) return;
-        const existing = access.get(s.departmentId) ?? {
-          fullDepartment: false,
+        const existing = access.get(s.teamId) ?? {
+          fullTeam: false,
           unitRoles: new Map<string, UserRole>(),
           unitBuildingBlocks: new Map<string, BuildingBlockAssignment[]>(),
         };
@@ -382,41 +397,44 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
         const unitBuildingBlocks = new Map(existing.unitBuildingBlocks ?? []);
         unitRoles.set(s.unitId, "viewer");
         unitBuildingBlocks.set(s.unitId, blocks);
-        access.set(s.departmentId, { ...existing, unitRoles, unitBuildingBlocks });
+        access.set(s.teamId, { ...existing, unitRoles, unitBuildingBlocks });
       }
     });
-    onSave(user, access);
+    onSave({ ...user, name: displayName.trim() || user.name }, access);
   };
 
   const bbCount = (key: string) => (buildingBlocksByKey.get(key) ?? []).length;
 
   return (
-    <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
-      <DialogHeader className="flex-shrink-0">
-        <DialogTitle>Edit Permissions</DialogTitle>
-        <DialogDescription>
-          Modify access permissions for {user.name}. Assign building blocks and roles per unit.
-        </DialogDescription>
+    <DialogContent className="flex h-[85vh] max-h-[85vh] min-h-0 max-w-2xl flex-col overflow-hidden">
+      <DialogHeader className="flex flex-shrink-0 flex-row flex-wrap items-center gap-x-3 gap-y-1 space-y-0">
+        <DialogTitle className="text-lg font-semibold">Edit Permissions</DialogTitle>
       </DialogHeader>
 
-      <div className="flex-1 overflow-hidden flex flex-col min-h-0 py-4">
-        <div className="p-3 bg-muted/50 rounded-lg flex-shrink-0 mb-2">
-          <div className="font-medium">{user.name}</div>
-          <div className="text-sm text-muted-foreground">{user.email}</div>
-        </div>
-
-        <StepIndicator steps={steps} currentStep={step} onStepClick={setStep} />
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden pt-2 pb-1">
+        <StepIndicator steps={steps} currentStep={step} maxVisitedStep={maxVisitedStep} onStepClick={setStep} />
 
         {step === 0 && (
-          <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-            <Label className="flex-shrink-0">Units</Label>
-            <p className="text-sm text-muted-foreground flex-shrink-0 mb-2">
-              Select departments (full access) or individual units. Show &quot;· N BBs&quot; for existing building blocks.
-            </p>
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div className="mb-3 grid shrink-0 grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-perm-name">Full name</Label>
+                <Input
+                  id="edit-perm-name"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="Full name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-perm-email">Email</Label>
+                <Input id="edit-perm-email" readOnly value={user.email} className="bg-muted/50" />
+              </div>
+            </div>
             <div className="relative mb-2 flex-shrink-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search departments or units..."
+                placeholder="Search teams or units..."
                 value={permissionsSearch}
                 onChange={(e) => setPermissionsSearch(e.target.value)}
                 className="pl-10"
@@ -424,8 +442,8 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
             </div>
             <div className="flex-1 min-h-0 rounded-md border overflow-y-auto overflow-x-hidden overscroll-contain">
                 <div className="p-4 space-y-4">
-                {filteredDepartments.map((dept) => {
-                  const deptUnits = units.filter((u) => u.departmentId === dept.id);
+                {filteredTeams.map((dept) => {
+                  const deptUnits = units.filter((u) => u.teamId === dept.id);
                   const fullSelected = isDeptSelected(dept.id);
                   return (
                     <div key={dept.id} className="space-y-2">
@@ -434,12 +452,14 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
                           <Checkbox
                             id={`edit-dept-${dept.id}`}
                             checked={fullSelected}
-                            onCheckedChange={() => toggleDepartment(dept.id)}
+                            onCheckedChange={() => toggleTeam(dept.id)}
                           />
-                          <label htmlFor={`edit-dept-${dept.id}`} className="text-sm font-medium cursor-pointer flex items-center gap-2">
+                          <label htmlFor={`edit-dept-${dept.id}`} className="flex cursor-pointer items-center gap-2 text-sm font-medium">
                             <Building2 className="h-4 w-4 text-primary" />
                             {dept.name}
-                            <span className="text-xs text-muted-foreground">(full access)</span>
+                            {fullSelected && (
+                              <span className="text-xs text-muted-foreground">(all units)</span>
+                            )}
                           </label>
                         </div>
                       </div>
@@ -476,10 +496,6 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
 
         {step === 1 && (
           <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-            <Label className="flex-shrink-0">Building blocks & roles</Label>
-            <p className="text-sm text-muted-foreground flex-shrink-0 mb-2">
-              Deselected units are greyed out; configuration is kept until you save. Each active unit must have at least one building block.
-            </p>
             {showValidation && incompleteKeys.size > 0 && (
               <Alert variant="destructive" className="mb-2 flex-shrink-0">
                 <AlertTriangle className="h-4 w-4" />
@@ -516,21 +532,23 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
                             <p className="text-sm text-muted-foreground">No building blocks added yet</p>
                           )}
                           {blocks.map((b) => (
-                            <div key={b.buildingBlockId} className="flex items-center gap-2 flex-wrap">
-                              <span className="text-sm">{b.buildingBlockId}</span>
-                              <Select value={b.role} onValueChange={(v) => setBuildingBlockRole(key, b.buildingBlockId, v as UserRole)}>
-                                <SelectTrigger className="w-24 h-8">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="admin">Admin</SelectItem>
-                                  <SelectItem value="editor">Editor</SelectItem>
-                                  <SelectItem value="viewer">Viewer</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeBuildingBlock(key, b.buildingBlockId)}>
-                                <X className="h-4 w-4" />
-                              </Button>
+                            <div key={b.buildingBlockId} className="flex items-center justify-between gap-2">
+                              <span className="min-w-0 flex-1 truncate text-sm">{b.buildingBlockId}</span>
+                              <div className="flex shrink-0 items-center gap-2">
+                                <Select value={b.role} onValueChange={(v) => setBuildingBlockRole(key, b.buildingBlockId, v as UserRole)}>
+                                  <SelectTrigger className="h-8 w-24">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="admin">Admin</SelectItem>
+                                    <SelectItem value="editor">Editor</SelectItem>
+                                    <SelectItem value="viewer">Viewer</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeBuildingBlock(key, b.buildingBlockId)}>
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </div>
                           ))}
                           <Select
@@ -566,7 +584,7 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
         )}
       </div>
 
-      <DialogFooter className="flex-shrink-0 pt-4 border-t">
+      <DialogFooter className="flex-shrink-0 pt-2">
         <Button variant="outline" onClick={onClose}>
           Cancel
         </Button>
@@ -575,21 +593,16 @@ function EditPermissionsModal({ user, onClose, onSave }: { user: UserType; onClo
             Next
           </Button>
         ) : (
-          <>
-            <Button variant="outline" onClick={() => setStep(0)}>
-              Back
-            </Button>
-            <Button onClick={handleSave} disabled={activeSelections.length === 0}>
-              Save Changes
-            </Button>
-          </>
+          <Button onClick={handleSave} disabled={activeSelections.length === 0}>
+            Save Changes
+          </Button>
         )}
       </DialogFooter>
     </DialogContent>
   );
 }
 
-// Invite User Modal — 3-step wizard
+// Invite User Modal — 2-step wizard (Identity & units, then Building blocks)
 function InviteUserModal({
   onClose,
   onSave,
@@ -599,10 +612,15 @@ function InviteUserModal({
   onSave: (name: string, email: string, access: ModalAccessState) => void;
   existingUsers: UserType[];
 }) {
-  const steps = [{ label: "Identity" }, { label: "Units" }, { label: "Building blocks & roles" }];
+  const steps = [{ label: "Identity & units" }, { label: "Building blocks & roles" }];
   const [step, setStep] = useState(0);
-  const [email, setEmail] = useState("");
+  const [maxVisitedStep, setMaxVisitedStep] = useState(0);
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+
+  useEffect(() => {
+    setMaxVisitedStep((m) => Math.max(m, step));
+  }, [step]);
   const [selections, setSelections] = useState<WizardSelection[]>([]);
   const [buildingBlocksByKey, setBuildingBlocksByKey] = useState<Map<string, BuildingBlockAssignment[]>>(new Map());
   const [inviteUnitsSearch, setInviteUnitsSearch] = useState("");
@@ -626,44 +644,44 @@ function InviteUserModal({
     return existingUsers.find((u) => u.email.toLowerCase() === email.toLowerCase());
   }, [email, existingUsers]);
 
-  const allowedDepartments = useMemo(() => {
+  const allowedTeams = useMemo(() => {
     if (!allowListMatch) return [];
-    return departments.filter((d) => allowListMatch.departmentIds.includes(d.id));
+    return teams.filter((d) => allowListMatch.teamIds.includes(d.id));
   }, [allowListMatch]);
 
-  const filteredAllowedDepartments = useMemo(() => {
-    if (!inviteUnitsSearch) return allowedDepartments;
+  const filteredAllowedTeams = useMemo(() => {
+    if (!inviteUnitsSearch) return allowedTeams;
     const query = inviteUnitsSearch.toLowerCase();
-    return allowedDepartments.filter(
+    return allowedTeams.filter(
       (d) =>
         d.name.toLowerCase().includes(query) ||
         d.abbreviation.toLowerCase().includes(query) ||
-        units.filter((u) => u.departmentId === d.id).some((u) => u.name.toLowerCase().includes(query))
+        units.filter((u) => u.teamId === d.id).some((u) => u.name.toLowerCase().includes(query))
     );
-  }, [allowedDepartments, inviteUnitsSearch]);
+  }, [allowedTeams, inviteUnitsSearch]);
 
   const hasValidEmail = email.includes("@") && !!emailDomain;
   const hasError = hasValidEmail && (!allowListMatch || !!existingUser);
   const canProceedFromStep0 = hasValidEmail && !!allowListMatch && !existingUser;
 
-  const toggleDepartment = (deptId: string) => {
-    const dept = departments.find((d) => d.id === deptId);
-    const deptUnits = units.filter((u) => u.departmentId === deptId);
-    const key = `dept-${deptId}`;
+  const toggleTeam = (deptId: string) => {
+    const dept = teams.find((d) => d.id === deptId);
+    const deptUnits = units.filter((u) => u.teamId === deptId);
+    const key = `team-${deptId}`;
     setSelections((prev) => {
-      const hasDept = prev.some((s) => s.type === "department" && s.departmentId === deptId);
+      const hasDept = prev.some((s) => s.type === "team" && s.teamId === deptId);
       if (hasDept) {
-        return prev.filter((s) => selectionKey(s) !== key && (s.type !== "unit" || s.departmentId !== deptId));
+        return prev.filter((s) => selectionKey(s) !== key && (s.type !== "unit" || s.teamId !== deptId));
       }
-      const withoutDeptUnits = prev.filter((s) => !(s.type === "unit" && s.departmentId === deptId));
-      if (dept) return [...withoutDeptUnits, { type: "department" as const, departmentId: deptId, name: dept.name }];
+      const withoutDeptUnits = prev.filter((s) => !(s.type === "unit" && s.teamId === deptId));
+      if (dept) return [...withoutDeptUnits, { type: "team" as const, teamId: deptId, name: dept.name }];
       return withoutDeptUnits;
     });
   };
 
   const toggleUnit = (deptId: string, unitId: string) => {
     const unit = units.find((u) => u.id === unitId);
-    const deptKey = `dept-${deptId}`;
+    const deptKey = `team-${deptId}`;
     const unitKey = `unit-${unitId}`;
     setSelections((prev) => {
       const hasUnit = prev.some((s) => s.type === "unit" && s.unitId === unitId);
@@ -671,12 +689,12 @@ function InviteUserModal({
         return prev.filter((s) => selectionKey(s) !== unitKey);
       }
       const withoutDept = prev.filter((s) => selectionKey(s) !== deptKey);
-      if (unit) return [...withoutDept, { type: "unit" as const, departmentId: deptId, unitId, name: unit.name }];
+      if (unit) return [...withoutDept, { type: "unit" as const, teamId: deptId, unitId, name: unit.name }];
       return withoutDept;
     });
   };
 
-  const isDeptSelected = (deptId: string) => selections.some((s) => s.type === "department" && s.departmentId === deptId);
+  const isDeptSelected = (deptId: string) => selections.some((s) => s.type === "team" && s.teamId === deptId);
   const isUnitSelected = (unitId: string) => selections.some((s) => s.type === "unit" && s.unitId === unitId);
 
   const addBuildingBlock = (key: string, buildingBlockId: string, role: UserRole) => {
@@ -721,7 +739,7 @@ function InviteUserModal({
 
   const handleSendInvitation = () => {
     if (!canSend) {
-      if (step < 2) return;
+      if (step < 1) return;
       setShowValidation(true);
       return;
     }
@@ -729,21 +747,21 @@ function InviteUserModal({
     selections.forEach((s) => {
       const key = selectionKey(s);
       const blocks = buildingBlocksByKey.get(key) ?? [];
-      if (s.type === "department") {
-        const dept = departments.find((d) => d.id === s.departmentId);
+      if (s.type === "team") {
+        const dept = teams.find((d) => d.id === s.teamId);
         if (dept) {
-          access.set(s.departmentId, {
-            fullDepartment: true,
-            fullDepartmentRole: "viewer",
-            fullDepartmentBuildingBlocks: blocks,
+          access.set(s.teamId, {
+            fullTeam: true,
+            fullTeamRole: "viewer",
+            fullTeamBuildingBlocks: blocks,
             unitRoles: new Map(),
           });
         }
       } else {
-        const dept = departments.find((d) => d.id === s.departmentId);
+        const dept = teams.find((d) => d.id === s.teamId);
         if (!dept) return;
-        const existing = access.get(s.departmentId) ?? {
-          fullDepartment: false,
+        const existing = access.get(s.teamId) ?? {
+          fullTeam: false,
           unitRoles: new Map<string, UserRole>(),
           unitBuildingBlocks: new Map<string, BuildingBlockAssignment[]>(),
         };
@@ -751,27 +769,34 @@ function InviteUserModal({
         const unitBuildingBlocks = new Map(existing.unitBuildingBlocks ?? []);
         unitRoles.set(s.unitId, "viewer");
         unitBuildingBlocks.set(s.unitId, blocks);
-        access.set(s.departmentId, { ...existing, unitRoles, unitBuildingBlocks });
+        access.set(s.teamId, { ...existing, unitRoles, unitBuildingBlocks });
       }
     });
     onSave(name.trim(), email, access);
   };
 
   return (
-    <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
-      <DialogHeader>
-        <DialogTitle>Invite User</DialogTitle>
-        <DialogDescription>
-          Invite a civil servant to access the platform. Complete identity, units, and building blocks.
-        </DialogDescription>
+    <DialogContent
+      className={cn(
+        "flex max-w-2xl flex-col overflow-hidden",
+        step === 0 ? "max-h-[85vh]" : "h-[85vh] max-h-[85vh] min-h-0"
+      )}
+    >
+      <DialogHeader className="flex flex-shrink-0 flex-row flex-wrap items-center gap-x-3 gap-y-1 space-y-0">
+        <DialogTitle className="text-lg font-semibold">Invite User</DialogTitle>
       </DialogHeader>
 
-      <div className="flex-1 overflow-hidden flex flex-col space-y-4 py-4">
-        <StepIndicator steps={steps} currentStep={step} onStepClick={setStep} />
+      <div
+        className={cn(
+          "flex flex-col overflow-hidden pt-2 pb-1",
+          step > 0 ? "min-h-0 flex-1 gap-4" : "space-y-4"
+        )}
+      >
+        <StepIndicator steps={steps} currentStep={step} maxVisitedStep={maxVisitedStep} onStepClick={setStep} />
 
         {step === 0 && (
-          <>
-            <div className="grid grid-cols-2 gap-4">
+          <div className={cn("flex flex-col gap-3", canProceedFromStep0 && "min-h-0 flex-1")}>
+            <div className="grid shrink-0 grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="invite-name">Full name</Label>
                 <Input
@@ -797,118 +822,103 @@ function InviteUserModal({
                 />
               </div>
             </div>
+
             {hasValidEmail && !allowListMatch && (
-              <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Domain not in allow list</AlertTitle>
-                <AlertDescription className="flex items-start justify-between gap-4">
-                  <span>
-                    The domain &quot;@{emailDomain}&quot; is not in the allow list. Only users from allowed domains can be invited.
-                  </span>
-                  <Button variant="outline" size="sm" className="shrink-0" asChild>
-                    <Link to="/allow-list">
-                      <ExternalLink className="h-3 w-3 mr-1" />
-                      Manage Allow List
-                    </Link>
-                  </Button>
-                </AlertDescription>
-              </Alert>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-destructive">
+                <span>@{emailDomain} is not on the allow list.</span>
+                <Button variant="link" className="h-auto p-0 text-xs text-destructive underline" asChild>
+                  <Link to="/allow-list">
+                    <ExternalLink className="mr-1 inline h-3 w-3" />
+                    Manage allow list
+                  </Link>
+                </Button>
+              </div>
             )}
             {hasValidEmail && allowListMatch && !existingUser && (
-              <Alert className="border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-900">
-                <Check className="h-4 w-4 text-green-600" />
-                <AlertTitle>Domain whitelisted</AlertTitle>
-                <AlertDescription>
-                  Domain @{emailDomain} is whitelisted → {allowedDepartments.length} department{allowedDepartments.length !== 1 ? "s" : ""} available
-                </AlertDescription>
-              </Alert>
+              <p className="text-xs text-green-700 dark:text-green-400">
+                <span className="mr-1">✓</span>
+                @{emailDomain} whitelisted · {allowedTeams.length} team
+                {allowedTeams.length !== 1 ? "s" : ""} available
+              </p>
             )}
             {existingUser && (
-              <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>User already exists</AlertTitle>
-                <AlertDescription>
-                  A user with this email ({existingUser.name}) already exists. You can edit their permissions instead.
-                </AlertDescription>
-              </Alert>
+              <p className="text-xs text-destructive">
+                A user with this email already exists ({existingUser.name}).
+              </p>
             )}
-          </>
+
+            {canProceedFromStep0 && (
+              <div className="flex min-h-0 flex-1 flex-col gap-2">
+                <div className="relative shrink-0">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search teams or units..."
+                    value={inviteUnitsSearch}
+                    onChange={(e) => setInviteUnitsSearch(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <div className="min-h-0 max-h-[min(45vh,320px)] flex-1 overflow-y-auto overflow-x-hidden overscroll-contain rounded-md border p-4">
+                  <div className="space-y-4">
+                    {filteredAllowedTeams.map((dept) => {
+                      const deptUnits = units.filter((u) => u.teamId === dept.id);
+                      const fullSelected = isDeptSelected(dept.id);
+                      return (
+                        <div key={dept.id} className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`inv-dept-${dept.id}`}
+                              checked={fullSelected}
+                              onCheckedChange={() => toggleTeam(dept.id)}
+                            />
+                            <label htmlFor={`inv-dept-${dept.id}`} className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+                              <Building2 className="h-4 w-4 text-primary" />
+                              {dept.name}
+                              {fullSelected && (
+                                <span className="text-xs text-muted-foreground">(all units)</span>
+                              )}
+                            </label>
+                          </div>
+                          {!fullSelected && deptUnits.length > 0 && (
+                            <div className="ml-6 space-y-2 border-l-2 border-muted pl-4">
+                              {deptUnits.map((unit) => (
+                                <div key={unit.id} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={`inv-unit-${unit.id}`}
+                                    checked={isUnitSelected(unit.id)}
+                                    onCheckedChange={() => toggleUnit(dept.id, unit.id)}
+                                  />
+                                  <label htmlFor={`inv-unit-${unit.id}`} className="cursor-pointer text-sm">
+                                    {unit.name}
+                                  </label>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {allowedTeams.length === 0 && (
+                      <p className="py-4 text-center text-sm text-muted-foreground">No teams available for this domain.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         {step === 1 && (
-          <>
-            <p className="text-sm text-muted-foreground">
-              Select departments (full access) or individual units. Department and its units are mutually exclusive.
-            </p>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search departments or units..."
-                value={inviteUnitsSearch}
-                onChange={(e) => setInviteUnitsSearch(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <ScrollArea className="h-[220px] rounded-md border p-4">
-              <div className="space-y-4">
-                {filteredAllowedDepartments.map((dept) => {
-                  const deptUnits = units.filter((u) => u.departmentId === dept.id);
-                  const fullSelected = isDeptSelected(dept.id);
-                  return (
-                    <div key={dept.id} className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`inv-dept-${dept.id}`}
-                          checked={fullSelected}
-                          onCheckedChange={() => toggleDepartment(dept.id)}
-                        />
-                        <label htmlFor={`inv-dept-${dept.id}`} className="text-sm font-medium cursor-pointer flex items-center gap-2">
-                          <Building2 className="h-4 w-4 text-primary" />
-                          {dept.name}
-                          <span className="text-xs text-muted-foreground">(full access)</span>
-                        </label>
-                      </div>
-                      {!fullSelected && deptUnits.length > 0 && (
-                        <div className="ml-6 space-y-2 border-l-2 border-muted pl-4">
-                          {deptUnits.map((unit) => (
-                            <div key={unit.id} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`inv-unit-${unit.id}`}
-                                checked={isUnitSelected(unit.id)}
-                                onCheckedChange={() => toggleUnit(dept.id, unit.id)}
-                              />
-                              <label htmlFor={`inv-unit-${unit.id}`} className="text-sm cursor-pointer">
-                                {unit.name}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-                {allowedDepartments.length === 0 && canProceedFromStep0 && (
-                  <p className="text-sm text-muted-foreground text-center py-4">No departments available for this domain.</p>
-                )}
-              </div>
-            </ScrollArea>
-          </>
-        )}
-
-        {step === 2 && (
-          <>
-            <p className="text-sm text-muted-foreground">
-              Add at least one building block per selection. Each block has a role (Admin, Editor, Viewer).
-            </p>
+          <div className="flex min-h-0 flex-1 flex-col gap-4">
             {showValidation && incompleteKeys.size > 0 && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="shrink-0">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
                   Each unit must have at least one building block assigned before sending the invitation.
                 </AlertDescription>
               </Alert>
             )}
-            <ScrollArea className="h-[260px] rounded-md border p-4">
+            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain rounded-md border p-4">
               <div className="space-y-4">
                 {selections.map((s) => {
                   const key = selectionKey(s);
@@ -928,21 +938,23 @@ function InviteUserModal({
                       <div className="mt-3 space-y-2">
                         {blocks.length === 0 && <p className="text-sm text-muted-foreground">No building blocks added yet</p>}
                         {blocks.map((b) => (
-                          <div key={b.buildingBlockId} className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm">{b.buildingBlockId}</span>
-                            <Select value={b.role} onValueChange={(v) => setBuildingBlockRole(key, b.buildingBlockId, v as UserRole)}>
-                              <SelectTrigger className="w-24 h-8">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="admin">Admin</SelectItem>
-                                <SelectItem value="editor">Editor</SelectItem>
-                                <SelectItem value="viewer">Viewer</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeBuildingBlock(key, b.buildingBlockId)}>
-                              <X className="h-4 w-4" />
-                            </Button>
+                          <div key={b.buildingBlockId} className="flex items-center justify-between gap-2">
+                            <span className="min-w-0 flex-1 truncate text-sm">{b.buildingBlockId}</span>
+                            <div className="flex shrink-0 items-center gap-2">
+                              <Select value={b.role} onValueChange={(v) => setBuildingBlockRole(key, b.buildingBlockId, v as UserRole)}>
+                                <SelectTrigger className="h-8 w-24">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="admin">Admin</SelectItem>
+                                  <SelectItem value="editor">Editor</SelectItem>
+                                  <SelectItem value="viewer">Viewer</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeBuildingBlock(key, b.buildingBlockId)}>
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
                         ))}
                         <Select
@@ -972,42 +984,27 @@ function InviteUserModal({
                   );
                 })}
               </div>
-            </ScrollArea>
-          </>
+            </div>
+          </div>
         )}
       </div>
 
-      <DialogFooter className="flex-shrink-0 pt-4 border-t">
+      <DialogFooter className="flex-shrink-0 pt-2">
         <Button variant="outline" onClick={onClose}>
           Cancel
         </Button>
-        {step < 2 ? (
-          <>
-            {step > 0 && (
-              <Button variant="outline" onClick={() => setStep(step - 1)}>
-                Back
-              </Button>
-            )}
-            <Button
-              onClick={() => setStep(step + 1)}
-              disabled={
-                (step === 0 && !canProceedFromStep0) ||
-                (step === 1 && selections.length === 0)
-              }
-            >
-              Next
-            </Button>
-          </>
+        {step === 0 ? (
+          <Button
+            onClick={() => setStep(1)}
+            disabled={!canProceedFromStep0 || selections.length === 0}
+          >
+            Next
+          </Button>
         ) : (
-          <>
-            <Button variant="outline" onClick={() => setStep(1)}>
-              Back
-            </Button>
-            <Button onClick={handleSendInvitation} disabled={!canClickSend}>
-              <UserPlus className="h-4 w-4 mr-2" />
-              Send invitation
-            </Button>
-          </>
+          <Button onClick={handleSendInvitation} disabled={!canClickSend}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            Send invitation
+          </Button>
         )}
       </DialogFooter>
     </DialogContent>
@@ -1034,11 +1031,11 @@ function UserDetailSheet({
 }) {
   const logs = user ? getUserActivityLogs(user.id) : [];
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [openDepartments, setOpenDepartments] = useState<Set<number>>(new Set());
+  const [openTeams, setOpenTeams] = useState<Set<number>>(new Set());
   const [tabValue, setTabValue] = useState<"details" | "activity">("details");
 
   useEffect(() => {
-    if (user) setOpenDepartments(new Set(user.access.map((_, i) => i)));
+    if (user) setOpenTeams(new Set(user.access.map((_, i) => i)));
   }, [user]);
 
   if (!user) return null;
@@ -1048,36 +1045,60 @@ function UserDetailSheet({
       <SheetContent className="flex h-full w-[500px] flex-col overflow-hidden sm:max-w-[500px]">
         {/* Top section: fixed — header + tabs */}
         <div className="shrink-0">
-          <SheetHeader>
-            <SheetTitle className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-full">
+          <SheetHeader className="space-y-0 text-left sm:text-left">
+            <div className="flex items-start gap-3">
+              <div className="shrink-0 rounded-full bg-primary/10 p-2">
                 <UserIcon className="h-5 w-5 text-primary" />
               </div>
-              {user.name}
-            </SheetTitle>
-            <SheetDescription>{user.email}</SheetDescription>
+              <div className="min-w-0 flex-1 space-y-0.5">
+                <SheetTitle className="text-lg font-semibold leading-tight">{user.name}</SheetTitle>
+                <p className="truncate text-sm text-muted-foreground">{user.email}</p>
+              </div>
+            </div>
           </SheetHeader>
-          <Tabs value={tabValue} onValueChange={(v) => setTabValue(v as "details" | "activity")} className="mt-6">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="activity">Activity Log</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div
+            className="mt-4 flex w-full shrink-0 border-b border-border"
+            role="tablist"
+            aria-label="User detail sections"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tabValue === "details"}
+              onClick={() => setTabValue("details")}
+              className={cn(
+                "flex-1 border-b-2 -mb-px rounded-none bg-transparent px-2 py-2.5 text-center text-sm font-medium transition-colors",
+                tabValue === "details"
+                  ? "z-[1] border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Details
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tabValue === "activity"}
+              onClick={() => setTabValue("activity")}
+              className={cn(
+                "flex-1 border-b-2 -mb-px rounded-none bg-transparent px-2 py-2.5 text-center text-sm font-medium transition-colors",
+                tabValue === "activity"
+                  ? "z-[1] border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Activity Log
+            </button>
+          </div>
         </div>
 
         {/* Middle section: scrollable */}
         <div className="min-h-0 flex-1 overflow-y-auto">
           {tabValue === "details" && (
             <div className="mt-4 space-y-6">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 text-sm">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <span>{user.email}</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span>Added on {user.addedAt} by {user.addedBy}</span>
-              </div>
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <Calendar className="h-4 w-4 shrink-0" />
+              <span>Added on {user.addedAt} by {user.addedBy}</span>
             </div>
 
             <Separator />
@@ -1086,22 +1107,22 @@ function UserDetailSheet({
               <h4 className="font-medium text-sm">Access Permissions</h4>
               <div className="space-y-2">
                 {user.access.map((access, index) => {
-                  const isFullDept = access.fullDepartment;
+                  const isFullDept = access.fullTeam;
                   const assignmentCount = isFullDept
-                    ? (access.fullDepartmentBuildingBlocks?.length ?? 0)
+                    ? (access.fullTeamBuildingBlocks?.length ?? 0)
                     : access.unitAccess.reduce((sum, ua) => sum + (ua.buildingBlocks?.length ?? 0), 0);
                   const unitCount = access.unitAccess.length;
                   const summary = isFullDept
-                    ? `full access · ${assignmentCount} assignment${assignmentCount !== 1 ? "s" : ""}`
-                    : `${unitCount} unit${unitCount !== 1 ? "s" : ""} · ${assignmentCount} assignment${assignmentCount !== 1 ? "s" : ""}`;
-                  const isOpen = openDepartments.has(index);
+                    ? `all units · ${assignmentCount} BBs`
+                    : `${unitCount} unit${unitCount !== 1 ? "s" : ""} · ${assignmentCount} BBs`;
+                  const isOpen = openTeams.has(index);
 
                   return (
                     <Collapsible
                       key={index}
                       open={isOpen}
                       onOpenChange={(open) =>
-                        setOpenDepartments((prev) => {
+                        setOpenTeams((prev) => {
                           const next = new Set(prev);
                           if (open) next.add(index);
                           else next.delete(index);
@@ -1110,26 +1131,28 @@ function UserDetailSheet({
                       }
                       className="rounded-lg bg-muted/50"
                     >
-                      <CollapsibleTrigger className="flex w-full items-center justify-between gap-2 p-3 text-left hover:bg-muted/50 rounded-lg transition-colors">
-                        <div className="flex items-center gap-2 min-w-0">
+                      <CollapsibleTrigger className="flex w-full items-center gap-2 p-3 text-left hover:bg-muted/50 rounded-lg transition-colors">
+                        <div className="flex min-w-0 flex-1 items-center gap-2">
                           <Building2 className="h-4 w-4 text-primary shrink-0" />
-                          <span className="font-medium text-sm truncate">{access.departmentName}</span>
+                          <span className="min-w-0 truncate font-medium text-sm">{access.teamName}</span>
                         </div>
-                        <span className="text-xs text-muted-foreground shrink-0">{summary}</span>
-                        <ChevronDown
-                          className={cn(
-                            "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
-                            isOpen && "rotate-180"
-                          )}
-                        />
+                        <div className="flex shrink-0 items-center gap-2">
+                          <span className="text-xs text-muted-foreground">{summary}</span>
+                          <ChevronDown
+                            className={cn(
+                              "h-4 w-4 text-muted-foreground transition-transform",
+                              isOpen && "rotate-180"
+                            )}
+                          />
+                        </div>
                       </CollapsibleTrigger>
                       <CollapsibleContent>
                         <div className="px-3 pb-3 pt-0 space-y-3">
                           {isFullDept ? (
                             <div className="space-y-2">
-                              {access.fullDepartmentBuildingBlocks && access.fullDepartmentBuildingBlocks.length > 0 ? (
+                              {access.fullTeamBuildingBlocks && access.fullTeamBuildingBlocks.length > 0 ? (
                                 <div className="space-y-1.5">
-                                  {access.fullDepartmentBuildingBlocks.map((bb, i) => (
+                                  {access.fullTeamBuildingBlocks.map((bb, i) => (
                                     <div key={i} className="flex items-center justify-between gap-2 text-sm">
                                       <span className="text-muted-foreground">{bb.buildingBlockId}</span>
                                       <RoleBadge role={bb.role} />
@@ -1352,7 +1375,9 @@ export default function UsersPage() {
   const [searchParams] = useSearchParams();
   const { canModify, canDelete, isReadOnly } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
-  const [departmentFilter, setDepartmentFilter] = useState(searchParams.get("department") || "all");
+  const [teamFilter, setTeamFilter] = useState(
+    searchParams.get("team") || searchParams.get("department") || "all"
+  );
   const [unitFilter, setUnitFilter] = useState(searchParams.get("unit") || "all");
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -1380,9 +1405,9 @@ export default function UsersPage() {
         }
       }
 
-      // Department filter
-      if (departmentFilter !== "all") {
-        if (!user.access.some(a => a.departmentId === departmentFilter)) {
+      // Team filter
+      if (teamFilter !== "all") {
+        if (!user.access.some(a => a.teamId === teamFilter)) {
           return false;
         }
       }
@@ -1396,24 +1421,24 @@ export default function UsersPage() {
 
     return true;
     });
-  }, [searchQuery, departmentFilter, unitFilter, userList]);
+  }, [searchQuery, teamFilter, unitFilter, userList]);
 
   const sortedUsers = useSorting(filteredUsers, sortKey, sortDirection, (user, key) => {
     if (key === "name") return user.name;
     if (key === "access") {
-      // Sort by first department name
-      return user.access[0]?.departmentName || "";
+      // Sort by first team name
+      return user.access[0]?.teamName || "";
     }
     return "";
   });
 
   const availableUnits = useMemo(() => {
-    if (departmentFilter === "all") return units;
-    return units.filter(u => u.departmentId === departmentFilter);
-  }, [departmentFilter]);
+    if (teamFilter === "all") return units;
+    return units.filter(u => u.teamId === teamFilter);
+  }, [teamFilter]);
 
-  const departmentOptions = useMemo(() => 
-    departments.map(d => ({ id: d.id, label: d.abbreviation })),
+  const teamOptions = useMemo(() => 
+    teams.map(d => ({ id: d.id, label: d.abbreviation })),
   []);
 
   const unitOptions = useMemo(() => 
@@ -1421,19 +1446,43 @@ export default function UsersPage() {
   [availableUnits]);
 
   const handleDeleteUser = (user: UserType) => {
-    setUserList(userList.filter(u => u.id !== user.id));
+    const insertIndex = userList.findIndex((u) => u.id === user.id);
+    setUserList((prev) => prev.filter((u) => u.id !== user.id));
     setSelectedUser(null);
     setUserToDelete(null);
-    setSelectedUsers(prev => {
+    setSelectedUsers((prev) => {
       const next = new Set(prev);
       next.delete(user.id);
       return next;
     });
+    toast.success("User removed", {
+      action: {
+        label: "Undo",
+        onClick: () => {
+          setUserList((prev) => {
+            if (prev.some((u) => u.id === user.id)) return prev;
+            const next = [...prev];
+            const at = Math.min(Math.max(insertIndex, 0), next.length);
+            next.splice(at, 0, user);
+            return next;
+          });
+        },
+      },
+    });
   };
 
   const handleBulkDelete = () => {
-    setUserList(userList.filter(u => !selectedUsers.has(u.id)));
+    const previousList = userList;
+    const removedIds = new Set(selectedUsers);
+    setUserList((prev) => prev.filter((u) => !removedIds.has(u.id)));
     setSelectedUsers(new Set());
+    const n = removedIds.size;
+    toast.success(n === 1 ? "User removed" : `${n} users removed`, {
+      action: {
+        label: "Undo",
+        onClick: () => setUserList(previousList),
+      },
+    });
   };
 
   const toggleUserSelection = (userId: string, e: React.MouseEvent) => {
@@ -1465,7 +1514,7 @@ export default function UsersPage() {
   const handleInviteUser = (name: string, email: string, accessMap: ModalAccessState) => {
     const newAccess: UserAccess[] = [];
     accessMap.forEach((value, deptId) => {
-      const dept = departments.find((d) => d.id === deptId);
+      const dept = teams.find((d) => d.id === deptId);
       if (dept) {
         const unitAccessList: UnitRoleAccess[] = [];
         value.unitRoles.forEach((role, unitId) => {
@@ -1476,11 +1525,11 @@ export default function UsersPage() {
           }
         });
         newAccess.push({
-          departmentId: deptId,
-          departmentName: dept.name,
-          fullDepartment: value.fullDepartment,
-          fullDepartmentRole: value.fullDepartmentRole,
-          fullDepartmentBuildingBlocks: value.fullDepartmentBuildingBlocks?.length ? value.fullDepartmentBuildingBlocks : undefined,
+          teamId: deptId,
+          teamName: dept.name,
+          fullTeam: value.fullTeam,
+          fullTeamRole: value.fullTeamRole,
+          fullTeamBuildingBlocks: value.fullTeamBuildingBlocks?.length ? value.fullTeamBuildingBlocks : undefined,
           unitAccess: unitAccessList,
         });
       }
@@ -1495,14 +1544,15 @@ export default function UsersPage() {
       addedBy: "Current Admin",
     };
 
-    setUserList([...userList, newUser]);
+    setUserList((prev) => [...prev, newUser]);
     setIsInviteOpen(false);
+    toast.success("Invitation sent");
   };
 
   const handleSavePermissions = (user: UserType, accessMap: ModalAccessState) => {
     const newAccess: UserAccess[] = [];
     accessMap.forEach((value, deptId) => {
-      const dept = departments.find((d) => d.id === deptId);
+      const dept = teams.find((d) => d.id === deptId);
       if (dept) {
         const unitAccessList: UnitRoleAccess[] = [];
         value.unitRoles.forEach((role, unitId) => {
@@ -1513,19 +1563,22 @@ export default function UsersPage() {
           }
         });
         newAccess.push({
-          departmentId: deptId,
-          departmentName: dept.name,
-          fullDepartment: value.fullDepartment,
-          fullDepartmentRole: value.fullDepartmentRole,
-          fullDepartmentBuildingBlocks: value.fullDepartmentBuildingBlocks?.length ? value.fullDepartmentBuildingBlocks : undefined,
+          teamId: deptId,
+          teamName: dept.name,
+          fullTeam: value.fullTeam,
+          fullTeamRole: value.fullTeamRole,
+          fullTeamBuildingBlocks: value.fullTeamBuildingBlocks?.length ? value.fullTeamBuildingBlocks : undefined,
           unitAccess: unitAccessList,
         });
       }
     });
 
-    setUserList(userList.map((u) => (u.id === user.id ? { ...u, access: newAccess } : u)));
+    setUserList((prev) =>
+      prev.map((u) => (u.id === user.id ? { ...u, name: user.name, access: newAccess } : u))
+    );
     setIsEditOpen(false);
     setEditingUser(null);
+    toast.success("Permissions saved");
   };
 
   return (
@@ -1533,7 +1586,7 @@ export default function UsersPage() {
       title="Users"
     >
       <p className="text-muted-foreground mb-6">
-        Manage civil servants' access to form submissions across departments and units.
+        Manage civil servants' access to form submissions across teams and units.
       </p>
 
       {/* Filters and Actions */}
@@ -1594,15 +1647,15 @@ export default function UsersPage() {
             </div>
 
             <SearchableFilterDropdown
-              value={departmentFilter}
-              onValueChange={(v) => { setDepartmentFilter(v); setUnitFilter("all"); }}
-              options={departmentOptions}
-              placeholder="Department"
-              allLabel="All Departments"
+              value={teamFilter}
+              onValueChange={(v) => { setTeamFilter(v); setUnitFilter("all"); }}
+              options={teamOptions}
+              placeholder="Team"
+              allLabel="All Teams"
               className="w-[200px]"
             />
 
-            {departmentFilter !== "all" && (
+            {teamFilter !== "all" && (
               <SearchableFilterDropdown
                 value={unitFilter}
                 onValueChange={setUnitFilter}
@@ -1634,13 +1687,13 @@ export default function UsersPage() {
       </div>
 
       {/* Active Filters */}
-      {(departmentFilter !== "all" || unitFilter !== "all") && (
+      {(teamFilter !== "all" || unitFilter !== "all") && (
         <div className="flex items-center gap-2 mb-4">
           <span className="text-sm text-muted-foreground">Active filters:</span>
-          {departmentFilter !== "all" && (
+          {teamFilter !== "all" && (
             <Badge variant="secondary" className="gap-1">
-              {departments.find(d => d.id === departmentFilter)?.abbreviation}
-              <button onClick={() => { setDepartmentFilter("all"); setUnitFilter("all"); }}>
+              {teams.find(d => d.id === teamFilter)?.abbreviation}
+              <button onClick={() => { setTeamFilter("all"); setUnitFilter("all"); }}>
                 <X className="h-3 w-3" />
               </button>
             </Badge>

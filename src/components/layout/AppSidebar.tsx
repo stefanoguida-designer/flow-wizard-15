@@ -24,7 +24,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 const mainNavItems = [
-  { title: "Departments", url: "/departments", icon: Building2 },
+  { title: "Teams", url: "/teams", icon: Building2 },
   { title: "Users", url: "/users", icon: Users },
   { title: "Activity Logs", url: "/activity-logs", icon: History },
 ];

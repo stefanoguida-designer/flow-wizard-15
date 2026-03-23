@@ -34,7 +34,7 @@ export function NavigationDiagram() {
               <NavItem icon={<LayoutDashboard className="w-4 h-4" />} label="Dashboard" active />
               <NavItem 
                 icon={<Building2 className="w-4 h-4" />} 
-                label="Departments" 
+                label="Teams" 
                 superAdminOnly 
               />
               <NavItem icon={<Boxes className="w-4 h-4" />} label="Units" />
@@ -77,12 +77,14 @@ export function NavigationDiagram() {
             </thead>
             <tbody className="text-xs">
               {[
-                { page: "Login", route: "/login", sa: true, admin: true },
-                { page: "Dashboard", route: "/dashboard", sa: true, admin: true },
-                { page: "Departments", route: "/dashboard/departments", sa: true, admin: false },
-                { page: "Units", route: "/dashboard/units", sa: true, admin: "read" },
-                { page: "Users", route: "/dashboard/users", sa: true, admin: true },
-                { page: "Settings", route: "/dashboard/settings", sa: true, admin: false },
+                { page: "Role / login", route: "/", sa: true, admin: true },
+                { page: "Teams", route: "/teams", sa: true, admin: true },
+                { page: "Team detail", route: "/teams/:id", sa: true, admin: true },
+                { page: "Users", route: "/users", sa: true, admin: true },
+                { page: "Activity logs", route: "/activity-logs", sa: true, admin: true },
+                { page: "Allow list", route: "/allow-list", sa: true, admin: "read" },
+                { page: "Admin management", route: "/admin-management", sa: true, admin: false },
+                { page: "Permissions ref.", route: "/permissions", sa: true, admin: true },
               ].map((row) => (
                 <tr key={row.route} className="border-b border-border/50">
                   <td className="py-2 px-3">{row.page}</td>

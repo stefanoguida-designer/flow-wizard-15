@@ -208,7 +208,7 @@ export default function ActivityLogsPage() {
             <SelectItem value="all">All Types</SelectItem>
             <SelectItem value="user">Users</SelectItem>
             <SelectItem value="unit">Units</SelectItem>
-            <SelectItem value="department">Departments</SelectItem>
+            <SelectItem value="team">Teams</SelectItem>
             <SelectItem value="admin">Admins</SelectItem>
             <SelectItem value="allowlist">Allow List</SelectItem>
           </SelectContent>

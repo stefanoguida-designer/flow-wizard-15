@@ -179,3 +179,41 @@
   .stagger-7 { animation-delay: 0.7s; }
   .stagger-8 { animation-delay: 0.8s; }
 }
+
+/*
+ * Sonner: forced toast borders (inline-level strength via !important).
+ * Match Sonner’s attribute selectors so these win over injected styles.
+ */
+[data-sonner-toast][data-styled="true"] {
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: #737373 !important; /* neutral-500 */
+}
+
+[data-sonner-toast][data-type="success"],
+[data-rich-colors="true"][data-sonner-toast][data-type="success"] {
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: #16a34a !important; /* green-600 */
+}
+
+[data-sonner-toast][data-type="error"],
+[data-rich-colors="true"][data-sonner-toast][data-type="error"] {
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: #dc2626 !important; /* red-600 */
+}
+
+[data-sonner-toast][data-type="info"],
+[data-rich-colors="true"][data-sonner-toast][data-type="info"] {
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: #0284c7 !important; /* sky-600 */
+}
+
+[data-sonner-toast][data-type="warning"],
+[data-rich-colors="true"][data-sonner-toast][data-type="warning"] {
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: #d97706 !important; /* amber-600 */
+}

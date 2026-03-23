@@ -6,7 +6,7 @@ export function UnitFlow() {
   return (
     <FlowSection
       title="Unit Management Flow"
-      description="Create and manage units within departments (Super Admin only, Admin read-only)"
+      description="Create and manage units within teams (Super Admin only, Admin read-only)"
       icon={<Boxes className="w-5 h-5" />}
     >
       <div className="grid md:grid-cols-2 gap-8">
@@ -26,7 +26,7 @@ export function UnitFlow() {
           <FlowConnector direction="down" />
           <FlowNode
             type="action"
-            title="Select Department"
+            title="Select Team"
             description="Dropdown selection"
             delay={2}
           />
@@ -40,7 +40,7 @@ export function UnitFlow() {
           <FlowConnector direction="down" />
           <FlowNode
             type="decision"
-            title="Name Unique in Dept?"
+            title="Name Unique in Team?"
             delay={4}
             className="bg-flow-decision"
           />
@@ -50,7 +50,7 @@ export function UnitFlow() {
               <FlowNode
                 type="page"
                 title="Created"
-                description="Unit linked to department"
+                description="Unit linked to team"
                 icon={<Check className="w-4 h-4 text-success" />}
                 delay={5}
               />

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
-import { getUnitsByDepartmentId, getDepartmentById, getUsersByUnitId, type Unit } from "@/lib/mockData";
+import { getUnitsByTeamId, getTeamById, type Unit } from "@/lib/mockData";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,12 +40,12 @@ import { Building2, Users, Plus, Pencil, Trash2, ExternalLink } from "lucide-rea
 import { toast } from "sonner";
 import { SortableTableHead, useSorting, toggleSort, type SortDirection } from "@/components/ui/sortable-table-head";
 
-export default function DepartmentDetailPage() {
+export default function TeamDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { canModify, canDelete } = useAuth();
-  const department = getDepartmentById(id || "");
-  const [units, setUnits] = useState<Unit[]>(getUnitsByDepartmentId(id || ""));
+  const team = getTeamById(id || "");
+  const [units, setUnits] = useState<Unit[]>(getUnitsByTeamId(id || ""));
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
@@ -66,13 +66,13 @@ export default function DepartmentDetailPage() {
     return "";
   });
 
-  if (!department) {
+  if (!team) {
     return (
-      <AppLayout breadcrumbs={[{ label: "Departments", href: "/departments" }, { label: "Not Found" }]}>
+      <AppLayout breadcrumbs={[{ label: "Teams", href: "/teams" }, { label: "Not Found" }]}>
         <div className="text-center py-12">
-          <p className="text-muted-foreground">Department not found</p>
-          <Button variant="link" onClick={() => navigate("/departments")}>
-            Back to Departments
+          <p className="text-muted-foreground">Team not found</p>
+          <Button variant="link" onClick={() => navigate("/teams")}>
+            Back to Teams
           </Button>
         </div>
       </AppLayout>
@@ -80,14 +80,17 @@ export default function DepartmentDetailPage() {
   }
 
   const handleCreateUnit = () => {
-    if (!newUnitName.trim()) return;
-    
+    if (!newUnitName.trim()) {
+      toast.error("Enter a unit name");
+      return;
+    }
+
     const newUnit: Unit = {
       id: `unit-${Date.now()}`,
       name: newUnitName,
       acronym: newUnitAcronym.trim() || undefined,
-      departmentId: department.id,
-      departmentName: department.name,
+      teamId: team.id,
+      teamName: team.name,
       usersCount: 0,
       createdAt: new Date().toISOString().split('T')[0],
       createdBy: "Current Admin",
@@ -97,11 +100,14 @@ export default function DepartmentDetailPage() {
     setNewUnitName("");
     setNewUnitAcronym("");
     setIsCreateOpen(false);
-    toast.success(`Unit "${newUnitName}" created successfully`);
+    toast.success("Unit created");
   };
 
   const handleEditUnit = () => {
-    if (!editingUnit || !newUnitName.trim()) return;
+    if (!editingUnit || !newUnitName.trim()) {
+      if (editingUnit && !newUnitName.trim()) toast.error("Enter a unit name");
+      return;
+    }
     
     setUnits(units.map(u => 
       u.id === editingUnit.id 
@@ -112,12 +118,26 @@ export default function DepartmentDetailPage() {
     setEditingUnit(null);
     setNewUnitName("");
     setNewUnitAcronym("");
-    toast.success("Unit updated successfully");
+    toast.success("Unit updated");
   };
 
   const handleDeleteUnit = (unit: Unit) => {
-    setUnits(units.filter(u => u.id !== unit.id));
-    toast.success(`Unit "${unit.name}" deleted successfully`);
+    const insertIndex = units.findIndex((u) => u.id === unit.id);
+    setUnits((prev) => prev.filter((u) => u.id !== unit.id));
+    toast.success("Unit removed", {
+      action: {
+        label: "Undo",
+        onClick: () => {
+          setUnits((prev) => {
+            if (prev.some((u) => u.id === unit.id)) return prev;
+            const next = [...prev];
+            const at = Math.min(Math.max(insertIndex, 0), next.length);
+            next.splice(at, 0, unit);
+            return next;
+          });
+        },
+      },
+    });
   };
 
   const openEditDialog = (unit: Unit) => {
@@ -130,21 +150,20 @@ export default function DepartmentDetailPage() {
   return (
     <AppLayout
       breadcrumbs={[
-        { label: "Departments", href: "/departments" },
-        { label: department.name }
+        { label: "Teams", href: "/teams" },
+        { label: team.name }
       ]}
       showBreadcrumbs={true}
     >
       <div className="space-y-6">
-        {/* Department Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             <div className="p-4 bg-primary/10 rounded-xl">
               <Building2 className="h-8 w-8 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">{department.name}</h1>
-              <p className="text-muted-foreground">{department.abbreviation}</p>
+              <h1 className="text-2xl font-bold">{team.name}</h1>
+              <p className="text-muted-foreground">{team.abbreviation}</p>
             </div>
           </div>
           <Badge variant="secondary" className="text-sm">
@@ -152,7 +171,6 @@ export default function DepartmentDetailPage() {
           </Badge>
         </div>
 
-        {/* Stats */}
         <Card className="max-w-xs">
           <CardContent className="flex items-center gap-3 p-4">
             <div className="p-2 bg-primary/10 rounded-lg">
@@ -160,17 +178,16 @@ export default function DepartmentDetailPage() {
             </div>
             <div>
               <Link 
-                to={`/users?department=${department.id}`}
+                to={`/users?team=${team.id}`}
                 className="text-2xl font-bold text-green-600 hover:text-green-700 hover:underline transition-colors"
               >
-                {department.usersCount}
+                {team.usersCount}
               </Link>
               <div className="text-sm text-muted-foreground">Users</div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Units Table */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Units ({units.length})</h2>
@@ -186,7 +203,7 @@ export default function DepartmentDetailPage() {
                   <DialogHeader>
                     <DialogTitle>Create New Unit</DialogTitle>
                     <DialogDescription>
-                      Add a new unit to {department.name}
+                      Add a new unit to {team.name}
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
@@ -272,7 +289,7 @@ export default function DepartmentDetailPage() {
                       </TableCell>
                       <TableCell>
                         <Link 
-                          to={`/users?department=${department.id}&unit=${unit.id}`}
+                          to={`/users?team=${team.id}&unit=${unit.id}`}
                           className="flex items-center gap-1 text-primary hover:underline"
                         >
                           {unit.usersCount} users
@@ -333,7 +350,6 @@ export default function DepartmentDetailPage() {
           </Card>
         </div>
 
-        {/* Edit Dialog */}
         <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
           <DialogContent>
             <DialogHeader>

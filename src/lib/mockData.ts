@@ -1,5 +1,5 @@
 // Types
-export interface Department {
+export interface Team {
   id: string;
   name: string;
   abbreviation: string;
@@ -11,8 +11,8 @@ export interface Unit {
   id: string;
   name: string;
   acronym?: string;
-  departmentId: string;
-  departmentName: string;
+  teamId: string;
+  teamName: string;
   usersCount: number;
   createdAt: string;
   createdBy: string;
@@ -36,11 +36,11 @@ export interface UnitRoleAccess {
 }
 
 export interface UserAccess {
-  departmentId: string;
-  departmentName: string;
-  fullDepartment: boolean;
-  fullDepartmentRole?: UserRole; // Role when fullDepartment is true
-  fullDepartmentBuildingBlocks?: BuildingBlockAssignment[];
+  teamId: string;
+  teamName: string;
+  fullTeam: boolean;
+  fullTeamRole?: UserRole; // Role when fullTeam is true
+  fullTeamBuildingBlocks?: BuildingBlockAssignment[];
   unitAccess: UnitRoleAccess[]; // Individual unit access with roles
 }
 
@@ -60,7 +60,7 @@ export interface ActivityLog {
   performedBy: string;
   performedByEmail: string;
   timestamp: string;
-  targetType: 'user' | 'unit' | 'department' | 'admin' | 'allowlist';
+  targetType: 'user' | 'unit' | 'team' | 'admin' | 'allowlist';
   targetName: string;
   metadata?: Record<string, string>;
 }
@@ -81,104 +81,104 @@ export interface AllowListedDomain {
   id: string;
   domain: string;
   name: string;
-  departmentIds: string[];
+  teamIds: string[];
   addedAt: string;
   addedBy: string;
 }
 
-// Mock Departments (Irish Government Departments - 20+ departments)
-export const departments: Department[] = [
-  { id: 'dept-1', name: 'Housing, Local Government and Heritage', abbreviation: 'DHLGH', unitsCount: 12, usersCount: 45 },
-  { id: 'dept-2', name: 'Education', abbreviation: 'DE', unitsCount: 10, usersCount: 32 },
-  { id: 'dept-3', name: 'Health', abbreviation: 'DoH', unitsCount: 15, usersCount: 67 },
-  { id: 'dept-4', name: 'Social Protection', abbreviation: 'DSP', unitsCount: 10, usersCount: 38 },
-  { id: 'dept-5', name: 'Enterprise, Trade and Employment', abbreviation: 'DETE', unitsCount: 0, usersCount: 24 },
-  { id: 'dept-6', name: 'Agriculture, Food and the Marine', abbreviation: 'DAFM', unitsCount: 0, usersCount: 29 },
-  { id: 'dept-7', name: 'Transport', abbreviation: 'DoT', unitsCount: 0, usersCount: 18 },
-  { id: 'dept-8', name: 'Environment, Climate and Communications', abbreviation: 'DECC', unitsCount: 0, usersCount: 22 },
-  { id: 'dept-9', name: 'Justice', abbreviation: 'DoJ', unitsCount: 11, usersCount: 41 },
-  { id: 'dept-10', name: 'Finance', abbreviation: 'DoF', unitsCount: 0, usersCount: 15 },
-  { id: 'dept-11', name: 'Public Expenditure, NDP Delivery and Reform', abbreviation: 'DPENDPR', unitsCount: 0, usersCount: 12 },
-  { id: 'dept-12', name: 'Foreign Affairs', abbreviation: 'DFA', unitsCount: 0, usersCount: 18 },
-  { id: 'dept-13', name: 'Defence', abbreviation: 'DoD', unitsCount: 0, usersCount: 14 },
-  { id: 'dept-14', name: 'Tourism, Culture, Arts, Gaeltacht, Sport and Media', abbreviation: 'DTCAGSM', unitsCount: 0, usersCount: 20 },
-  { id: 'dept-15', name: 'Children, Equality, Disability, Integration and Youth', abbreviation: 'DCEDIY', unitsCount: 0, usersCount: 25 },
-  { id: 'dept-16', name: 'Rural and Community Development', abbreviation: 'DRCD', unitsCount: 0, usersCount: 16 },
-  { id: 'dept-17', name: 'Further and Higher Education, Research, Innovation and Science', abbreviation: 'DFHERIS', unitsCount: 0, usersCount: 19 },
-  { id: 'dept-18', name: 'An Taoiseach', abbreviation: 'TAOIS', unitsCount: 0, usersCount: 8 },
-  { id: 'dept-19', name: 'Office of the Revenue Commissioners', abbreviation: 'REVENUE', unitsCount: 0, usersCount: 35 },
-  { id: 'dept-20', name: 'Office of Public Works', abbreviation: 'OPW', unitsCount: 0, usersCount: 22 },
+// Mock teams (Irish Government bodies — many map to traditional ministerial portfolios)
+export const teams: Team[] = [
+  { id: 'team-1', name: 'Housing, Local Government and Heritage', abbreviation: 'DHLGH', unitsCount: 12, usersCount: 45 },
+  { id: 'team-2', name: 'Education', abbreviation: 'DE', unitsCount: 10, usersCount: 32 },
+  { id: 'team-3', name: 'Health', abbreviation: 'DoH', unitsCount: 15, usersCount: 67 },
+  { id: 'team-4', name: 'Social Protection', abbreviation: 'DSP', unitsCount: 10, usersCount: 38 },
+  { id: 'team-5', name: 'Enterprise, Trade and Employment', abbreviation: 'DETE', unitsCount: 0, usersCount: 24 },
+  { id: 'team-6', name: 'Agriculture, Food and the Marine', abbreviation: 'DAFM', unitsCount: 0, usersCount: 29 },
+  { id: 'team-7', name: 'Transport', abbreviation: 'DoT', unitsCount: 0, usersCount: 18 },
+  { id: 'team-8', name: 'Environment, Climate and Communications', abbreviation: 'DECC', unitsCount: 0, usersCount: 22 },
+  { id: 'team-9', name: 'Justice', abbreviation: 'DoJ', unitsCount: 11, usersCount: 41 },
+  { id: 'team-10', name: 'Finance', abbreviation: 'DoF', unitsCount: 0, usersCount: 15 },
+  { id: 'team-11', name: 'Public Expenditure, NDP Delivery and Reform', abbreviation: 'DPENDPR', unitsCount: 0, usersCount: 12 },
+  { id: 'team-12', name: 'Foreign Affairs', abbreviation: 'DFA', unitsCount: 0, usersCount: 18 },
+  { id: 'team-13', name: 'Defence', abbreviation: 'DoD', unitsCount: 0, usersCount: 14 },
+  { id: 'team-14', name: 'Tourism, Culture, Arts, Gaeltacht, Sport and Media', abbreviation: 'DTCAGSM', unitsCount: 0, usersCount: 20 },
+  { id: 'team-15', name: 'Children, Equality, Disability, Integration and Youth', abbreviation: 'DCEDIY', unitsCount: 0, usersCount: 25 },
+  { id: 'team-16', name: 'Rural and Community Development', abbreviation: 'DRCD', unitsCount: 0, usersCount: 16 },
+  { id: 'team-17', name: 'Further and Higher Education, Research, Innovation and Science', abbreviation: 'DFHERIS', unitsCount: 0, usersCount: 19 },
+  { id: 'team-18', name: 'An Taoiseach', abbreviation: 'TAOIS', unitsCount: 0, usersCount: 8 },
+  { id: 'team-19', name: 'Office of the Revenue Commissioners', abbreviation: 'REVENUE', unitsCount: 0, usersCount: 35 },
+  { id: 'team-20', name: 'Office of Public Works', abbreviation: 'OPW', unitsCount: 0, usersCount: 22 },
 ];
 
-// Mock Units per Department (5 departments with 10+ units each)
+// Mock units per team (several teams with 10+ units each)
 export const units: Unit[] = [
-  // Housing Department - 12 units (Local Authorities)
-  { id: 'unit-1', name: 'Cork City Council', acronym: 'CCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 4, createdAt: '2024-01-15', createdBy: 'Marie O\'Sullivan' },
-  { id: 'unit-2', name: 'Dublin City Council', acronym: 'DCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 5, createdAt: '2024-01-15', createdBy: 'Marie O\'Sullivan' },
-  { id: 'unit-3', name: 'Galway County Council', acronym: 'GCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 3, createdAt: '2024-02-20', createdBy: 'John Murphy' },
-  { id: 'unit-4', name: 'Kilkenny County Council', acronym: 'KCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 2, createdAt: '2024-02-20', createdBy: 'John Murphy' },
-  { id: 'unit-5', name: 'Limerick City and County Council', acronym: 'LCCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 3, createdAt: '2024-03-10', createdBy: 'Marie O\'Sullivan' },
-  { id: 'unit-6', name: 'Waterford City and County Council', acronym: 'WCCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 2, createdAt: '2024-03-10', createdBy: 'Marie O\'Sullivan' },
-  { id: 'unit-7', name: 'Fingal County Council', acronym: 'FCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 4, createdAt: '2024-03-15', createdBy: 'John Murphy' },
-  { id: 'unit-8', name: 'South Dublin County Council', acronym: 'SDCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 3, createdAt: '2024-03-15', createdBy: 'John Murphy' },
-  { id: 'unit-9', name: 'Dún Laoghaire-Rathdown County Council', acronym: 'DLRCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 3, createdAt: '2024-03-20', createdBy: 'Marie O\'Sullivan' },
-  { id: 'unit-10', name: 'Kerry County Council', acronym: 'KeCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 2, createdAt: '2024-04-01', createdBy: 'Sinead Kelly' },
-  { id: 'unit-11', name: 'Mayo County Council', acronym: 'MCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 2, createdAt: '2024-04-01', createdBy: 'Sinead Kelly' },
-  { id: 'unit-12', name: 'Wexford County Council', acronym: 'WeCC', departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', usersCount: 2, createdAt: '2024-04-05', createdBy: 'John Murphy' },
+  // Housing Team - 12 units (Local Authorities)
+  { id: 'unit-1', name: 'Cork City Council', acronym: 'CCC', teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', usersCount: 4, createdAt: '2024-01-15', createdBy: 'Marie O\'Sullivan' },
+  { id: 'unit-2', name: 'Dublin City Council', acronym: 'DCC', teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', usersCount: 5, createdAt: '2024-01-15', createdBy: 'Marie O\'Sullivan' },
+  { id: 'unit-3', name: 'Galway County Council', acronym: 'GCC', teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', usersCount: 3, createdAt: '2024-02-20', createdBy: 'John Murphy' },
+  { id: 'unit-4', name: 'Kilkenny County Council', acronym: 'KCC', teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', usersCount: 2, createdAt: '2024-02-20', createdBy: 'John Murphy' },
+  { id: 'unit-5', name: 'Limerick City and County Council', acronym: 'LCCC', teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', usersCount: 3, createdAt: '2024-03-10', createdBy: 'Marie O\'Sullivan' },
+  { id: 'unit-6', name: 'Waterford City and County Council', acronym: 'WCCC', teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', usersCount: 2, createdAt: '2024-03-10', createdBy: 'Marie O\'Sullivan' },
+  { id: 'unit-7', name: 'Fingal County Council', acronym: 'FCC', teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', usersCount: 4, createdAt: '2024-03-15', createdBy: 'John Murphy' },
+  { id: 'unit-8', name: 'South Dublin County Council', acronym: 'SDCC', teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', usersCount: 3, createdAt: '2024-03-15', createdBy: 'John Murphy' },
+  { id: 'unit-9', name: 'Dún Laoghaire-Rathdown County Council', acronym: 'DLRCC', teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', usersCount: 3, createdAt: '2024-03-20', createdBy: 'Marie O\'Sullivan' },
+  { id: 'unit-10', name: 'Kerry County Council', acronym: 'KeCC', teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', usersCount: 2, createdAt: '2024-04-01', createdBy: 'Sinead Kelly' },
+  { id: 'unit-11', name: 'Mayo County Council', acronym: 'MCC', teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', usersCount: 2, createdAt: '2024-04-01', createdBy: 'Sinead Kelly' },
+  { id: 'unit-12', name: 'Wexford County Council', acronym: 'WeCC', teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', usersCount: 2, createdAt: '2024-04-05', createdBy: 'John Murphy' },
   
-  // Education Department - 10 units
-  { id: 'unit-13', name: 'Primary Schools Division', acronym: 'PSD', departmentId: 'dept-2', departmentName: 'Education', usersCount: 4, createdAt: '2024-01-10', createdBy: 'Sinead Kelly' },
-  { id: 'unit-14', name: 'Secondary Schools Division', acronym: 'SSD', departmentId: 'dept-2', departmentName: 'Education', usersCount: 3, createdAt: '2024-01-10', createdBy: 'Sinead Kelly' },
-  { id: 'unit-15', name: 'Higher Education Division', acronym: 'HED', departmentId: 'dept-2', departmentName: 'Education', usersCount: 3, createdAt: '2024-02-01', createdBy: 'Sinead Kelly' },
-  { id: 'unit-16', name: 'Special Education Division', acronym: 'SED', departmentId: 'dept-2', departmentName: 'Education', usersCount: 3, createdAt: '2024-02-15', createdBy: 'Sinead Kelly' },
-  { id: 'unit-17', name: 'Teacher Education Section', acronym: 'TES', departmentId: 'dept-2', departmentName: 'Education', usersCount: 2, createdAt: '2024-02-20', createdBy: 'John Murphy' },
-  { id: 'unit-18', name: 'Curriculum and Assessment Policy', acronym: 'CAP', departmentId: 'dept-2', departmentName: 'Education', usersCount: 3, createdAt: '2024-03-01', createdBy: 'Sinead Kelly' },
-  { id: 'unit-19', name: 'School Transport Section', acronym: 'STS', departmentId: 'dept-2', departmentName: 'Education', usersCount: 2, createdAt: '2024-03-10', createdBy: 'John Murphy' },
-  { id: 'unit-20', name: 'Statistics Section', acronym: 'SS', departmentId: 'dept-2', departmentName: 'Education', usersCount: 2, createdAt: '2024-03-15', createdBy: 'Sinead Kelly' },
-  { id: 'unit-21', name: 'International Section', acronym: 'IS', departmentId: 'dept-2', departmentName: 'Education', usersCount: 2, createdAt: '2024-03-20', createdBy: 'Marie O\'Sullivan' },
-  { id: 'unit-22', name: 'ICT Policy Unit', acronym: 'ICTPU', departmentId: 'dept-2', departmentName: 'Education', usersCount: 3, createdAt: '2024-04-01', createdBy: 'John Murphy' },
+  // Education Team - 10 units
+  { id: 'unit-13', name: 'Primary Schools Division', acronym: 'PSD', teamId: 'team-2', teamName: 'Education', usersCount: 4, createdAt: '2024-01-10', createdBy: 'Sinead Kelly' },
+  { id: 'unit-14', name: 'Secondary Schools Division', acronym: 'SSD', teamId: 'team-2', teamName: 'Education', usersCount: 3, createdAt: '2024-01-10', createdBy: 'Sinead Kelly' },
+  { id: 'unit-15', name: 'Higher Education Division', acronym: 'HED', teamId: 'team-2', teamName: 'Education', usersCount: 3, createdAt: '2024-02-01', createdBy: 'Sinead Kelly' },
+  { id: 'unit-16', name: 'Special Education Division', acronym: 'SED', teamId: 'team-2', teamName: 'Education', usersCount: 3, createdAt: '2024-02-15', createdBy: 'Sinead Kelly' },
+  { id: 'unit-17', name: 'Teacher Education Section', acronym: 'TES', teamId: 'team-2', teamName: 'Education', usersCount: 2, createdAt: '2024-02-20', createdBy: 'John Murphy' },
+  { id: 'unit-18', name: 'Curriculum and Assessment Policy', acronym: 'CAP', teamId: 'team-2', teamName: 'Education', usersCount: 3, createdAt: '2024-03-01', createdBy: 'Sinead Kelly' },
+  { id: 'unit-19', name: 'School Transport Section', acronym: 'STS', teamId: 'team-2', teamName: 'Education', usersCount: 2, createdAt: '2024-03-10', createdBy: 'John Murphy' },
+  { id: 'unit-20', name: 'Statistics Section', acronym: 'SS', teamId: 'team-2', teamName: 'Education', usersCount: 2, createdAt: '2024-03-15', createdBy: 'Sinead Kelly' },
+  { id: 'unit-21', name: 'International Section', acronym: 'IS', teamId: 'team-2', teamName: 'Education', usersCount: 2, createdAt: '2024-03-20', createdBy: 'Marie O\'Sullivan' },
+  { id: 'unit-22', name: 'ICT Policy Unit', acronym: 'ICTPU', teamId: 'team-2', teamName: 'Education', usersCount: 3, createdAt: '2024-04-01', createdBy: 'John Murphy' },
   
-  // Health Department - 15 units
-  { id: 'unit-23', name: 'HSE Dublin North', acronym: 'HSEDN', departmentId: 'dept-3', departmentName: 'Health', usersCount: 5, createdAt: '2024-01-05', createdBy: 'Aoife Brennan' },
-  { id: 'unit-24', name: 'HSE Dublin South', acronym: 'HSEDS', departmentId: 'dept-3', departmentName: 'Health', usersCount: 4, createdAt: '2024-01-05', createdBy: 'Aoife Brennan' },
-  { id: 'unit-25', name: 'HSE Cork', acronym: 'HSEC', departmentId: 'dept-3', departmentName: 'Health', usersCount: 5, createdAt: '2024-01-05', createdBy: 'Aoife Brennan' },
-  { id: 'unit-26', name: 'HSE Galway', acronym: 'HSEG', departmentId: 'dept-3', departmentName: 'Health', usersCount: 4, createdAt: '2024-01-20', createdBy: 'Aoife Brennan' },
-  { id: 'unit-27', name: 'HSE Limerick', acronym: 'HSEL', departmentId: 'dept-3', departmentName: 'Health', usersCount: 3, createdAt: '2024-02-01', createdBy: 'Declan Walsh' },
-  { id: 'unit-28', name: 'HSE Waterford', acronym: 'HSEW', departmentId: 'dept-3', departmentName: 'Health', usersCount: 3, createdAt: '2024-02-10', createdBy: 'Declan Walsh' },
-  { id: 'unit-29', name: 'HSE Kerry', acronym: 'HSEKe', departmentId: 'dept-3', departmentName: 'Health', usersCount: 2, createdAt: '2024-02-15', createdBy: 'Aoife Brennan' },
-  { id: 'unit-30', name: 'HSE Sligo', acronym: 'HSES', departmentId: 'dept-3', departmentName: 'Health', usersCount: 2, createdAt: '2024-02-20', createdBy: 'Aoife Brennan' },
-  { id: 'unit-31', name: 'HSE Donegal', acronym: 'HSEDo', departmentId: 'dept-3', departmentName: 'Health', usersCount: 2, createdAt: '2024-03-01', createdBy: 'Declan Walsh' },
-  { id: 'unit-32', name: 'HSE Mayo', acronym: 'HSEM', departmentId: 'dept-3', departmentName: 'Health', usersCount: 2, createdAt: '2024-03-05', createdBy: 'Aoife Brennan' },
-  { id: 'unit-33', name: 'Mental Health Division', acronym: 'MHD', departmentId: 'dept-3', departmentName: 'Health', usersCount: 4, createdAt: '2024-03-10', createdBy: 'Declan Walsh' },
-  { id: 'unit-34', name: 'Primary Care Division', acronym: 'PCD', departmentId: 'dept-3', departmentName: 'Health', usersCount: 4, createdAt: '2024-03-15', createdBy: 'Aoife Brennan' },
-  { id: 'unit-35', name: 'Acute Hospitals Division', acronym: 'AHD', departmentId: 'dept-3', departmentName: 'Health', usersCount: 5, createdAt: '2024-03-20', createdBy: 'Declan Walsh' },
-  { id: 'unit-36', name: 'Community Healthcare Division', acronym: 'CHD', departmentId: 'dept-3', departmentName: 'Health', usersCount: 3, createdAt: '2024-04-01', createdBy: 'Aoife Brennan' },
-  { id: 'unit-37', name: 'National Ambulance Service', acronym: 'NAS', departmentId: 'dept-3', departmentName: 'Health', usersCount: 3, createdAt: '2024-04-05', createdBy: 'Declan Walsh' },
+  // Health team - 15 units
+  { id: 'unit-23', name: 'HSE Dublin North', acronym: 'HSEDN', teamId: 'team-3', teamName: 'Health', usersCount: 5, createdAt: '2024-01-05', createdBy: 'Aoife Brennan' },
+  { id: 'unit-24', name: 'HSE Dublin South', acronym: 'HSEDS', teamId: 'team-3', teamName: 'Health', usersCount: 4, createdAt: '2024-01-05', createdBy: 'Aoife Brennan' },
+  { id: 'unit-25', name: 'HSE Cork', acronym: 'HSEC', teamId: 'team-3', teamName: 'Health', usersCount: 5, createdAt: '2024-01-05', createdBy: 'Aoife Brennan' },
+  { id: 'unit-26', name: 'HSE Galway', acronym: 'HSEG', teamId: 'team-3', teamName: 'Health', usersCount: 4, createdAt: '2024-01-20', createdBy: 'Aoife Brennan' },
+  { id: 'unit-27', name: 'HSE Limerick', acronym: 'HSEL', teamId: 'team-3', teamName: 'Health', usersCount: 3, createdAt: '2024-02-01', createdBy: 'Declan Walsh' },
+  { id: 'unit-28', name: 'HSE Waterford', acronym: 'HSEW', teamId: 'team-3', teamName: 'Health', usersCount: 3, createdAt: '2024-02-10', createdBy: 'Declan Walsh' },
+  { id: 'unit-29', name: 'HSE Kerry', acronym: 'HSEKe', teamId: 'team-3', teamName: 'Health', usersCount: 2, createdAt: '2024-02-15', createdBy: 'Aoife Brennan' },
+  { id: 'unit-30', name: 'HSE Sligo', acronym: 'HSES', teamId: 'team-3', teamName: 'Health', usersCount: 2, createdAt: '2024-02-20', createdBy: 'Aoife Brennan' },
+  { id: 'unit-31', name: 'HSE Donegal', acronym: 'HSEDo', teamId: 'team-3', teamName: 'Health', usersCount: 2, createdAt: '2024-03-01', createdBy: 'Declan Walsh' },
+  { id: 'unit-32', name: 'HSE Mayo', acronym: 'HSEM', teamId: 'team-3', teamName: 'Health', usersCount: 2, createdAt: '2024-03-05', createdBy: 'Aoife Brennan' },
+  { id: 'unit-33', name: 'Mental Health Division', acronym: 'MHD', teamId: 'team-3', teamName: 'Health', usersCount: 4, createdAt: '2024-03-10', createdBy: 'Declan Walsh' },
+  { id: 'unit-34', name: 'Primary Care Division', acronym: 'PCD', teamId: 'team-3', teamName: 'Health', usersCount: 4, createdAt: '2024-03-15', createdBy: 'Aoife Brennan' },
+  { id: 'unit-35', name: 'Acute Hospitals Division', acronym: 'AHD', teamId: 'team-3', teamName: 'Health', usersCount: 5, createdAt: '2024-03-20', createdBy: 'Declan Walsh' },
+  { id: 'unit-36', name: 'Community Healthcare Division', acronym: 'CHD', teamId: 'team-3', teamName: 'Health', usersCount: 3, createdAt: '2024-04-01', createdBy: 'Aoife Brennan' },
+  { id: 'unit-37', name: 'National Ambulance Service', acronym: 'NAS', teamId: 'team-3', teamName: 'Health', usersCount: 3, createdAt: '2024-04-05', createdBy: 'Declan Walsh' },
   
   // Social Protection - 10 units
-  { id: 'unit-38', name: 'Employment Services', acronym: 'ES', departmentId: 'dept-4', departmentName: 'Social Protection', usersCount: 4, createdAt: '2024-01-12', createdBy: 'Declan Walsh' },
-  { id: 'unit-39', name: 'Community Welfare', acronym: 'CW', departmentId: 'dept-4', departmentName: 'Social Protection', usersCount: 3, createdAt: '2024-01-12', createdBy: 'Declan Walsh' },
-  { id: 'unit-40', name: 'Pensions Division', acronym: 'PD', departmentId: 'dept-4', departmentName: 'Social Protection', usersCount: 3, createdAt: '2024-02-01', createdBy: 'Declan Walsh' },
-  { id: 'unit-41', name: 'Child Benefit Section', acronym: 'CBS', departmentId: 'dept-4', departmentName: 'Social Protection', usersCount: 3, createdAt: '2024-02-10', createdBy: 'Sinead Kelly' },
-  { id: 'unit-42', name: 'Disability Services', acronym: 'DS', departmentId: 'dept-4', departmentName: 'Social Protection', usersCount: 3, createdAt: '2024-02-15', createdBy: 'Declan Walsh' },
-  { id: 'unit-43', name: 'Jobseeker Services', acronym: 'JS', departmentId: 'dept-4', departmentName: 'Social Protection', usersCount: 4, createdAt: '2024-02-20', createdBy: 'Sinead Kelly' },
-  { id: 'unit-44', name: 'Carers Section', acronym: 'CS', departmentId: 'dept-4', departmentName: 'Social Protection', usersCount: 2, createdAt: '2024-03-01', createdBy: 'Declan Walsh' },
-  { id: 'unit-45', name: 'Maternity Benefit Section', acronym: 'MBS', departmentId: 'dept-4', departmentName: 'Social Protection', usersCount: 2, createdAt: '2024-03-10', createdBy: 'Sinead Kelly' },
-  { id: 'unit-46', name: 'PRSI Records', acronym: 'PRSIR', departmentId: 'dept-4', departmentName: 'Social Protection', usersCount: 3, createdAt: '2024-03-15', createdBy: 'Declan Walsh' },
-  { id: 'unit-47', name: 'Appeals Office', acronym: 'AO', departmentId: 'dept-4', departmentName: 'Social Protection', usersCount: 3, createdAt: '2024-03-20', createdBy: 'Sinead Kelly' },
+  { id: 'unit-38', name: 'Employment Services', acronym: 'ES', teamId: 'team-4', teamName: 'Social Protection', usersCount: 4, createdAt: '2024-01-12', createdBy: 'Declan Walsh' },
+  { id: 'unit-39', name: 'Community Welfare', acronym: 'CW', teamId: 'team-4', teamName: 'Social Protection', usersCount: 3, createdAt: '2024-01-12', createdBy: 'Declan Walsh' },
+  { id: 'unit-40', name: 'Pensions Division', acronym: 'PD', teamId: 'team-4', teamName: 'Social Protection', usersCount: 3, createdAt: '2024-02-01', createdBy: 'Declan Walsh' },
+  { id: 'unit-41', name: 'Child Benefit Section', acronym: 'CBS', teamId: 'team-4', teamName: 'Social Protection', usersCount: 3, createdAt: '2024-02-10', createdBy: 'Sinead Kelly' },
+  { id: 'unit-42', name: 'Disability Services', acronym: 'DS', teamId: 'team-4', teamName: 'Social Protection', usersCount: 3, createdAt: '2024-02-15', createdBy: 'Declan Walsh' },
+  { id: 'unit-43', name: 'Jobseeker Services', acronym: 'JS', teamId: 'team-4', teamName: 'Social Protection', usersCount: 4, createdAt: '2024-02-20', createdBy: 'Sinead Kelly' },
+  { id: 'unit-44', name: 'Carers Section', acronym: 'CS', teamId: 'team-4', teamName: 'Social Protection', usersCount: 2, createdAt: '2024-03-01', createdBy: 'Declan Walsh' },
+  { id: 'unit-45', name: 'Maternity Benefit Section', acronym: 'MBS', teamId: 'team-4', teamName: 'Social Protection', usersCount: 2, createdAt: '2024-03-10', createdBy: 'Sinead Kelly' },
+  { id: 'unit-46', name: 'PRSI Records', acronym: 'PRSIR', teamId: 'team-4', teamName: 'Social Protection', usersCount: 3, createdAt: '2024-03-15', createdBy: 'Declan Walsh' },
+  { id: 'unit-47', name: 'Appeals Office', acronym: 'AO', teamId: 'team-4', teamName: 'Social Protection', usersCount: 3, createdAt: '2024-03-20', createdBy: 'Sinead Kelly' },
   
   // Justice - 11 units
-  { id: 'unit-48', name: 'An Garda Síochána Liaison', acronym: 'AGSL', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 4, createdAt: '2024-01-08', createdBy: 'Marie O\'Sullivan' },
-  { id: 'unit-49', name: 'Irish Prison Service', acronym: 'IPS', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 3, createdAt: '2024-01-08', createdBy: 'Marie O\'Sullivan' },
-  { id: 'unit-50', name: 'Courts Service', acronym: 'CoS', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 4, createdAt: '2024-01-15', createdBy: 'John Murphy' },
-  { id: 'unit-51', name: 'Immigration Service', acronym: 'ImS', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 5, createdAt: '2024-01-20', createdBy: 'Marie O\'Sullivan' },
-  { id: 'unit-52', name: 'Legal Aid Board', acronym: 'LAB', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 3, createdAt: '2024-02-01', createdBy: 'John Murphy' },
-  { id: 'unit-53', name: 'Probation Service', acronym: 'PS', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 3, createdAt: '2024-02-10', createdBy: 'Marie O\'Sullivan' },
-  { id: 'unit-54', name: 'Data Protection Unit', acronym: 'DPU', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 2, createdAt: '2024-02-15', createdBy: 'John Murphy' },
-  { id: 'unit-55', name: 'Crime Policy Division', acronym: 'CPD', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 3, createdAt: '2024-02-20', createdBy: 'Marie O\'Sullivan' },
-  { id: 'unit-56', name: 'Civil Law Reform', acronym: 'CLR', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 2, createdAt: '2024-03-01', createdBy: 'John Murphy' },
-  { id: 'unit-57', name: 'International Protection Office', acronym: 'IPO', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 4, createdAt: '2024-03-10', createdBy: 'Marie O\'Sullivan' },
-  { id: 'unit-58', name: 'Coroners Service', acronym: 'CorS', departmentId: 'dept-9', departmentName: 'Justice', usersCount: 2, createdAt: '2024-03-15', createdBy: 'John Murphy' },
+  { id: 'unit-48', name: 'An Garda Síochána Liaison', acronym: 'AGSL', teamId: 'team-9', teamName: 'Justice', usersCount: 4, createdAt: '2024-01-08', createdBy: 'Marie O\'Sullivan' },
+  { id: 'unit-49', name: 'Irish Prison Service', acronym: 'IPS', teamId: 'team-9', teamName: 'Justice', usersCount: 3, createdAt: '2024-01-08', createdBy: 'Marie O\'Sullivan' },
+  { id: 'unit-50', name: 'Courts Service', acronym: 'CoS', teamId: 'team-9', teamName: 'Justice', usersCount: 4, createdAt: '2024-01-15', createdBy: 'John Murphy' },
+  { id: 'unit-51', name: 'Immigration Service', acronym: 'ImS', teamId: 'team-9', teamName: 'Justice', usersCount: 5, createdAt: '2024-01-20', createdBy: 'Marie O\'Sullivan' },
+  { id: 'unit-52', name: 'Legal Aid Board', acronym: 'LAB', teamId: 'team-9', teamName: 'Justice', usersCount: 3, createdAt: '2024-02-01', createdBy: 'John Murphy' },
+  { id: 'unit-53', name: 'Probation Service', acronym: 'PS', teamId: 'team-9', teamName: 'Justice', usersCount: 3, createdAt: '2024-02-10', createdBy: 'Marie O\'Sullivan' },
+  { id: 'unit-54', name: 'Data Protection Unit', acronym: 'DPU', teamId: 'team-9', teamName: 'Justice', usersCount: 2, createdAt: '2024-02-15', createdBy: 'John Murphy' },
+  { id: 'unit-55', name: 'Crime Policy Division', acronym: 'CPD', teamId: 'team-9', teamName: 'Justice', usersCount: 3, createdAt: '2024-02-20', createdBy: 'Marie O\'Sullivan' },
+  { id: 'unit-56', name: 'Civil Law Reform', acronym: 'CLR', teamId: 'team-9', teamName: 'Justice', usersCount: 2, createdAt: '2024-03-01', createdBy: 'John Murphy' },
+  { id: 'unit-57', name: 'International Protection Office', acronym: 'IPO', teamId: 'team-9', teamName: 'Justice', usersCount: 4, createdAt: '2024-03-10', createdBy: 'Marie O\'Sullivan' },
+  { id: 'unit-58', name: 'Coroners Service', acronym: 'CorS', teamId: 'team-9', teamName: 'Justice', usersCount: 2, createdAt: '2024-03-15', createdBy: 'John Murphy' },
 ];
 
 // Irish first names and surnames for realistic data
@@ -221,8 +221,8 @@ function addBuildingBlocksToUsers(usersList: User[]): User[] {
     ...user,
     access: user.access.map((a) => ({
       ...a,
-      fullDepartmentBuildingBlocks: a.fullDepartment
-        ? getBuildingBlocksForScope(`${user.id}-dept-${a.departmentId}`)
+      fullTeamBuildingBlocks: a.fullTeam
+        ? getBuildingBlocksForScope(`${user.id}-team-${a.teamId}`)
         : undefined,
       unitAccess: a.unitAccess.map((ua) => ({
         ...ua,
@@ -232,235 +232,235 @@ function addBuildingBlocksToUsers(usersList: User[]): User[] {
   }));
 }
 
-// Generate 40+ users across departments with VARIED multi-department access (building blocks assigned below)
+// Generate 40+ users across teams with varied multi-team access (building blocks assigned below)
 const usersWithAccess: User[] = [
-  // Users with access to MULTIPLE departments (chaotic/varied patterns)
+  // Users with access to MULTIPLE teams (chaotic/varied patterns)
   { id: 'user-1', name: 'Seán Ó Briain', email: generateEmail('Seán', 'Ó Briain', 'housing.gov.ie'), access: [
-    { departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', fullDepartment: true, fullDepartmentRole: 'admin', unitAccess: [] },
-    { departmentId: 'dept-3', departmentName: 'Health', fullDepartment: false, unitAccess: [{ unitId: 'unit-23', unitName: 'HSE Dublin North', role: 'viewer' }, { unitId: 'unit-25', unitName: 'HSE Cork', role: 'editor' }] }
+    { teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', fullTeam: true, fullTeamRole: 'admin', unitAccess: [] },
+    { teamId: 'team-3', teamName: 'Health', fullTeam: false, unitAccess: [{ unitId: 'unit-23', unitName: 'HSE Dublin North', role: 'viewer' }, { unitId: 'unit-25', unitName: 'HSE Cork', role: 'editor' }] }
   ], addedAt: '2024-01-15', addedBy: 'Marie O\'Sullivan' },
   
   { id: 'user-2', name: 'Aoife Ní Chonchúir', email: generateEmail('Aoife', 'Ní Chonchúir', 'housing.gov.ie'), access: [
-    { departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', fullDepartment: false, unitAccess: [{ unitId: 'unit-1', unitName: 'Cork City Council', role: 'editor' }, { unitId: 'unit-2', unitName: 'Dublin City Council', role: 'viewer' }] },
-    { departmentId: 'dept-2', departmentName: 'Education', fullDepartment: false, unitAccess: [{ unitId: 'unit-13', unitName: 'Primary Schools Division', role: 'viewer' }] },
-    { departmentId: 'dept-9', departmentName: 'Justice', fullDepartment: false, unitAccess: [{ unitId: 'unit-48', unitName: 'An Garda Síochána Liaison', role: 'editor' }] }
+    { teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', fullTeam: false, unitAccess: [{ unitId: 'unit-1', unitName: 'Cork City Council', role: 'editor' }, { unitId: 'unit-2', unitName: 'Dublin City Council', role: 'viewer' }] },
+    { teamId: 'team-2', teamName: 'Education', fullTeam: false, unitAccess: [{ unitId: 'unit-13', unitName: 'Primary Schools Division', role: 'viewer' }] },
+    { teamId: 'team-9', teamName: 'Justice', fullTeam: false, unitAccess: [{ unitId: 'unit-48', unitName: 'An Garda Síochána Liaison', role: 'editor' }] }
   ], addedAt: '2024-02-01', addedBy: 'Marie O\'Sullivan' },
   
   { id: 'user-3', name: 'Ciarán Mac Carthaigh', email: generateEmail('Ciarán', 'Mac Carthaigh', 'housing.gov.ie'), access: [
-    { departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', fullDepartment: false, unitAccess: [{ unitId: 'unit-3', unitName: 'Galway County Council', role: 'viewer' }, { unitId: 'unit-4', unitName: 'Kilkenny County Council', role: 'editor' }, { unitId: 'unit-5', unitName: 'Limerick City and County Council', role: 'admin' }] }
+    { teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', fullTeam: false, unitAccess: [{ unitId: 'unit-3', unitName: 'Galway County Council', role: 'viewer' }, { unitId: 'unit-4', unitName: 'Kilkenny County Council', role: 'editor' }, { unitId: 'unit-5', unitName: 'Limerick City and County Council', role: 'admin' }] }
   ], addedAt: '2024-02-10', addedBy: 'John Murphy' },
   
   { id: 'user-4', name: 'Niamh Ní Dhomhnaill', email: generateEmail('Niamh', 'Ní Dhomhnaill', 'housing.gov.ie'), access: [
-    { departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', fullDepartment: false, unitAccess: [{ unitId: 'unit-6', unitName: 'Waterford City and County Council', role: 'editor' }] },
-    { departmentId: 'dept-4', departmentName: 'Social Protection', fullDepartment: true, fullDepartmentRole: 'viewer', unitAccess: [] }
+    { teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', fullTeam: false, unitAccess: [{ unitId: 'unit-6', unitName: 'Waterford City and County Council', role: 'editor' }] },
+    { teamId: 'team-4', teamName: 'Social Protection', fullTeam: true, fullTeamRole: 'viewer', unitAccess: [] }
   ], addedAt: '2024-02-15', addedBy: 'Marie O\'Sullivan' },
   
   { id: 'user-5', name: 'Pádraig Ó Suilleabháin', email: generateEmail('Pádraig', 'Ó Suilleabháin', 'housing.gov.ie'), access: [
-    { departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', fullDepartment: false, unitAccess: [{ unitId: 'unit-8', unitName: 'South Dublin County Council', role: 'admin' }] },
-    { departmentId: 'dept-3', departmentName: 'Health', fullDepartment: false, unitAccess: [{ unitId: 'unit-33', unitName: 'Mental Health Division', role: 'editor' }, { unitId: 'unit-34', unitName: 'Primary Care Division', role: 'viewer' }] },
-    { departmentId: 'dept-9', departmentName: 'Justice', fullDepartment: false, unitAccess: [{ unitId: 'unit-50', unitName: 'Courts Service', role: 'admin' }] }
+    { teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', fullTeam: false, unitAccess: [{ unitId: 'unit-8', unitName: 'South Dublin County Council', role: 'admin' }] },
+    { teamId: 'team-3', teamName: 'Health', fullTeam: false, unitAccess: [{ unitId: 'unit-33', unitName: 'Mental Health Division', role: 'editor' }, { unitId: 'unit-34', unitName: 'Primary Care Division', role: 'viewer' }] },
+    { teamId: 'team-9', teamName: 'Justice', fullTeam: false, unitAccess: [{ unitId: 'unit-50', unitName: 'Courts Service', role: 'admin' }] }
   ], addedAt: '2024-03-01', addedBy: 'John Murphy' },
   
   { id: 'user-6', name: 'Máire Ní Bhriain', email: generateEmail('Máire', 'Ní Bhriain', 'housing.gov.ie'), access: [
-    { departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', fullDepartment: false, unitAccess: [{ unitId: 'unit-9', unitName: 'Dún Laoghaire-Rathdown County Council', role: 'viewer' }, { unitId: 'unit-10', unitName: 'Kerry County Council', role: 'editor' }] }
+    { teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', fullTeam: false, unitAccess: [{ unitId: 'unit-9', unitName: 'Dún Laoghaire-Rathdown County Council', role: 'viewer' }, { unitId: 'unit-10', unitName: 'Kerry County Council', role: 'editor' }] }
   ], addedAt: '2024-03-10', addedBy: 'Sinead Kelly' },
   
   { id: 'user-7', name: 'Eoin Mac Aoidh', email: generateEmail('Eoin', 'Mac Aoidh', 'housing.gov.ie'), access: [
-    { departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', fullDepartment: false, unitAccess: [{ unitId: 'unit-11', unitName: 'Mayo County Council', role: 'editor' }] },
-    { departmentId: 'dept-2', departmentName: 'Education', fullDepartment: false, unitAccess: [{ unitId: 'unit-15', unitName: 'Higher Education Division', role: 'admin' }, { unitId: 'unit-16', unitName: 'Special Education Division', role: 'viewer' }] }
+    { teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', fullTeam: false, unitAccess: [{ unitId: 'unit-11', unitName: 'Mayo County Council', role: 'editor' }] },
+    { teamId: 'team-2', teamName: 'Education', fullTeam: false, unitAccess: [{ unitId: 'unit-15', unitName: 'Higher Education Division', role: 'admin' }, { unitId: 'unit-16', unitName: 'Special Education Division', role: 'viewer' }] }
   ], addedAt: '2024-03-15', addedBy: 'John Murphy' },
   
   { id: 'user-8', name: 'Síle Ní Mhurchú', email: generateEmail('Síle', 'Ní Mhurchú', 'housing.gov.ie'), access: [
-    { departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', fullDepartment: false, unitAccess: [{ unitId: 'unit-12', unitName: 'Wexford County Council', role: 'viewer' }] }
+    { teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', fullTeam: false, unitAccess: [{ unitId: 'unit-12', unitName: 'Wexford County Council', role: 'viewer' }] }
   ], addedAt: '2024-03-20', addedBy: 'Marie O\'Sullivan' },
   
   { id: 'user-9', name: 'Tadhg Ó Ceallaigh', email: generateEmail('Tadhg', 'Ó Ceallaigh', 'housing.gov.ie'), access: [
-    { departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', fullDepartment: false, unitAccess: [{ unitId: 'unit-1', unitName: 'Cork City Council', role: 'admin' }, { unitId: 'unit-5', unitName: 'Limerick City and County Council', role: 'viewer' }] },
-    { departmentId: 'dept-4', departmentName: 'Social Protection', fullDepartment: false, unitAccess: [{ unitId: 'unit-38', unitName: 'Employment Services', role: 'editor' }] }
+    { teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', fullTeam: false, unitAccess: [{ unitId: 'unit-1', unitName: 'Cork City Council', role: 'admin' }, { unitId: 'unit-5', unitName: 'Limerick City and County Council', role: 'viewer' }] },
+    { teamId: 'team-4', teamName: 'Social Protection', fullTeam: false, unitAccess: [{ unitId: 'unit-38', unitName: 'Employment Services', role: 'editor' }] }
   ], addedAt: '2024-04-01', addedBy: 'Sinead Kelly' },
   
   { id: 'user-10', name: 'Gráinne Ní Fhloinn', email: generateEmail('Gráinne', 'Ní Fhloinn', 'housing.gov.ie'), access: [
-    { departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', fullDepartment: false, unitAccess: [{ unitId: 'unit-2', unitName: 'Dublin City Council', role: 'editor' }, { unitId: 'unit-7', unitName: 'Fingal County Council', role: 'admin' }] },
-    { departmentId: 'dept-3', departmentName: 'Health', fullDepartment: false, unitAccess: [{ unitId: 'unit-35', unitName: 'Acute Hospitals Division', role: 'viewer' }] },
-    { departmentId: 'dept-2', departmentName: 'Education', fullDepartment: false, unitAccess: [{ unitId: 'unit-22', unitName: 'ICT Policy Unit', role: 'editor' }] }
+    { teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', fullTeam: false, unitAccess: [{ unitId: 'unit-2', unitName: 'Dublin City Council', role: 'editor' }, { unitId: 'unit-7', unitName: 'Fingal County Council', role: 'admin' }] },
+    { teamId: 'team-3', teamName: 'Health', fullTeam: false, unitAccess: [{ unitId: 'unit-35', unitName: 'Acute Hospitals Division', role: 'viewer' }] },
+    { teamId: 'team-2', teamName: 'Education', fullTeam: false, unitAccess: [{ unitId: 'unit-22', unitName: 'ICT Policy Unit', role: 'editor' }] }
   ], addedAt: '2024-04-05', addedBy: 'John Murphy' },
   
-  // Education Department users with cross-department access
+  // Education team users with cross-team access
   { id: 'user-11', name: 'Oisín Ó Néill', email: generateEmail('Oisín', 'Ó Néill', 'education.gov.ie'), access: [
-    { departmentId: 'dept-2', departmentName: 'Education', fullDepartment: true, fullDepartmentRole: 'viewer', unitAccess: [] }
+    { teamId: 'team-2', teamName: 'Education', fullTeam: true, fullTeamRole: 'viewer', unitAccess: [] }
   ], addedAt: '2024-01-20', addedBy: 'Sinead Kelly' },
   
   { id: 'user-12', name: 'Siobhán Ní Riain', email: generateEmail('Siobhán', 'Ní Riain', 'education.gov.ie'), access: [
-    { departmentId: 'dept-2', departmentName: 'Education', fullDepartment: false, unitAccess: [{ unitId: 'unit-13', unitName: 'Primary Schools Division', role: 'editor' }, { unitId: 'unit-14', unitName: 'Secondary Schools Division', role: 'admin' }] },
-    { departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', fullDepartment: false, unitAccess: [{ unitId: 'unit-2', unitName: 'Dublin City Council', role: 'viewer' }] }
+    { teamId: 'team-2', teamName: 'Education', fullTeam: false, unitAccess: [{ unitId: 'unit-13', unitName: 'Primary Schools Division', role: 'editor' }, { unitId: 'unit-14', unitName: 'Secondary Schools Division', role: 'admin' }] },
+    { teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', fullTeam: false, unitAccess: [{ unitId: 'unit-2', unitName: 'Dublin City Council', role: 'viewer' }] }
   ], addedAt: '2024-02-05', addedBy: 'John Murphy' },
   
   { id: 'user-13', name: 'Cormac Mac Giolla', email: generateEmail('Cormac', 'Mac Giolla', 'education.gov.ie'), access: [
-    { departmentId: 'dept-2', departmentName: 'Education', fullDepartment: false, unitAccess: [{ unitId: 'unit-15', unitName: 'Higher Education Division', role: 'viewer' }] },
-    { departmentId: 'dept-4', departmentName: 'Social Protection', fullDepartment: false, unitAccess: [{ unitId: 'unit-41', unitName: 'Child Benefit Section', role: 'editor' }, { unitId: 'unit-43', unitName: 'Jobseeker Services', role: 'viewer' }] }
+    { teamId: 'team-2', teamName: 'Education', fullTeam: false, unitAccess: [{ unitId: 'unit-15', unitName: 'Higher Education Division', role: 'viewer' }] },
+    { teamId: 'team-4', teamName: 'Social Protection', fullTeam: false, unitAccess: [{ unitId: 'unit-41', unitName: 'Child Benefit Section', role: 'editor' }, { unitId: 'unit-43', unitName: 'Jobseeker Services', role: 'viewer' }] }
   ], addedAt: '2024-02-15', addedBy: 'Sinead Kelly' },
   
   { id: 'user-14', name: 'Áine Ní Shé', email: generateEmail('Áine', 'Ní Shé', 'education.gov.ie'), access: [
-    { departmentId: 'dept-2', departmentName: 'Education', fullDepartment: false, unitAccess: [{ unitId: 'unit-16', unitName: 'Special Education Division', role: 'editor' }, { unitId: 'unit-17', unitName: 'Teacher Education Section', role: 'viewer' }] }
+    { teamId: 'team-2', teamName: 'Education', fullTeam: false, unitAccess: [{ unitId: 'unit-16', unitName: 'Special Education Division', role: 'editor' }, { unitId: 'unit-17', unitName: 'Teacher Education Section', role: 'viewer' }] }
   ], addedAt: '2024-02-25', addedBy: 'John Murphy' },
   
   { id: 'user-15', name: 'Fionn Ó Dónaill', email: generateEmail('Fionn', 'Ó Dónaill', 'education.gov.ie'), access: [
-    { departmentId: 'dept-2', departmentName: 'Education', fullDepartment: false, unitAccess: [{ unitId: 'unit-18', unitName: 'Curriculum and Assessment Policy', role: 'admin' }] },
-    { departmentId: 'dept-9', departmentName: 'Justice', fullDepartment: false, unitAccess: [{ unitId: 'unit-51', unitName: 'Immigration Service', role: 'viewer' }] }
+    { teamId: 'team-2', teamName: 'Education', fullTeam: false, unitAccess: [{ unitId: 'unit-18', unitName: 'Curriculum and Assessment Policy', role: 'admin' }] },
+    { teamId: 'team-9', teamName: 'Justice', fullTeam: false, unitAccess: [{ unitId: 'unit-51', unitName: 'Immigration Service', role: 'viewer' }] }
   ], addedAt: '2024-03-05', addedBy: 'Sinead Kelly' },
   
   { id: 'user-16', name: 'Caoimhe Ní Cheallaigh', email: generateEmail('Caoimhe', 'Ní Cheallaigh', 'education.gov.ie'), access: [
-    { departmentId: 'dept-2', departmentName: 'Education', fullDepartment: false, unitAccess: [{ unitId: 'unit-19', unitName: 'School Transport Section', role: 'viewer' }, { unitId: 'unit-20', unitName: 'Statistics Section', role: 'editor' }] },
-    { departmentId: 'dept-3', departmentName: 'Health', fullDepartment: true, fullDepartmentRole: 'viewer', unitAccess: [] }
+    { teamId: 'team-2', teamName: 'Education', fullTeam: false, unitAccess: [{ unitId: 'unit-19', unitName: 'School Transport Section', role: 'viewer' }, { unitId: 'unit-20', unitName: 'Statistics Section', role: 'editor' }] },
+    { teamId: 'team-3', teamName: 'Health', fullTeam: true, fullTeamRole: 'viewer', unitAccess: [] }
   ], addedAt: '2024-03-15', addedBy: 'Marie O\'Sullivan' },
   
   { id: 'user-17', name: 'Darragh Ó Murchú', email: generateEmail('Darragh', 'Ó Murchú', 'education.gov.ie'), access: [
-    { departmentId: 'dept-2', departmentName: 'Education', fullDepartment: false, unitAccess: [{ unitId: 'unit-21', unitName: 'International Section', role: 'editor' }] }
+    { teamId: 'team-2', teamName: 'Education', fullTeam: false, unitAccess: [{ unitId: 'unit-21', unitName: 'International Section', role: 'editor' }] }
   ], addedAt: '2024-03-25', addedBy: 'John Murphy' },
   
   { id: 'user-18', name: 'Róisín Ní Ghrádaigh', email: generateEmail('Róisín', 'Ní Ghrádaigh', 'education.gov.ie'), access: [
-    { departmentId: 'dept-2', departmentName: 'Education', fullDepartment: false, unitAccess: [{ unitId: 'unit-22', unitName: 'ICT Policy Unit', role: 'admin' }] },
-    { departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', fullDepartment: false, unitAccess: [{ unitId: 'unit-3', unitName: 'Galway County Council', role: 'viewer' }, { unitId: 'unit-8', unitName: 'South Dublin County Council', role: 'editor' }] },
-    { departmentId: 'dept-4', departmentName: 'Social Protection', fullDepartment: false, unitAccess: [{ unitId: 'unit-40', unitName: 'Pensions Division', role: 'viewer' }] }
+    { teamId: 'team-2', teamName: 'Education', fullTeam: false, unitAccess: [{ unitId: 'unit-22', unitName: 'ICT Policy Unit', role: 'admin' }] },
+    { teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', fullTeam: false, unitAccess: [{ unitId: 'unit-3', unitName: 'Galway County Council', role: 'viewer' }, { unitId: 'unit-8', unitName: 'South Dublin County Council', role: 'editor' }] },
+    { teamId: 'team-4', teamName: 'Social Protection', fullTeam: false, unitAccess: [{ unitId: 'unit-40', unitName: 'Pensions Division', role: 'viewer' }] }
   ], addedAt: '2024-04-01', addedBy: 'Sinead Kelly' },
   
-  // Health Department users
+  // Health team users
   { id: 'user-19', name: 'Conor Ó Flannagáin', email: generateEmail('Conor', 'Ó Flannagáin', 'health.gov.ie'), access: [
-    { departmentId: 'dept-3', departmentName: 'Health', fullDepartment: true, fullDepartmentRole: 'editor', unitAccess: [] },
-    { departmentId: 'dept-4', departmentName: 'Social Protection', fullDepartment: false, unitAccess: [{ unitId: 'unit-42', unitName: 'Disability Services', role: 'admin' }] }
+    { teamId: 'team-3', teamName: 'Health', fullTeam: true, fullTeamRole: 'editor', unitAccess: [] },
+    { teamId: 'team-4', teamName: 'Social Protection', fullTeam: false, unitAccess: [{ unitId: 'unit-42', unitName: 'Disability Services', role: 'admin' }] }
   ], addedAt: '2024-01-10', addedBy: 'Aoife Brennan' },
   
   { id: 'user-20', name: 'Saoirse Ní Mhaoláin', email: generateEmail('Saoirse', 'Ní Mhaoláin', 'health.gov.ie'), access: [
-    { departmentId: 'dept-3', departmentName: 'Health', fullDepartment: false, unitAccess: [{ unitId: 'unit-23', unitName: 'HSE Dublin North', role: 'viewer' }, { unitId: 'unit-24', unitName: 'HSE Dublin South', role: 'editor' }] }
+    { teamId: 'team-3', teamName: 'Health', fullTeam: false, unitAccess: [{ unitId: 'unit-23', unitName: 'HSE Dublin North', role: 'viewer' }, { unitId: 'unit-24', unitName: 'HSE Dublin South', role: 'editor' }] }
   ], addedAt: '2024-01-20', addedBy: 'Declan Walsh' },
   
   { id: 'user-21', name: 'Liam Ó Raghallaigh', email: generateEmail('Liam', 'Ó Raghallaigh', 'health.gov.ie'), access: [
-    { departmentId: 'dept-3', departmentName: 'Health', fullDepartment: false, unitAccess: [{ unitId: 'unit-25', unitName: 'HSE Cork', role: 'admin' }] },
-    { departmentId: 'dept-2', departmentName: 'Education', fullDepartment: false, unitAccess: [{ unitId: 'unit-16', unitName: 'Special Education Division', role: 'viewer' }] },
-    { departmentId: 'dept-9', departmentName: 'Justice', fullDepartment: false, unitAccess: [{ unitId: 'unit-53', unitName: 'Probation Service', role: 'editor' }] }
+    { teamId: 'team-3', teamName: 'Health', fullTeam: false, unitAccess: [{ unitId: 'unit-25', unitName: 'HSE Cork', role: 'admin' }] },
+    { teamId: 'team-2', teamName: 'Education', fullTeam: false, unitAccess: [{ unitId: 'unit-16', unitName: 'Special Education Division', role: 'viewer' }] },
+    { teamId: 'team-9', teamName: 'Justice', fullTeam: false, unitAccess: [{ unitId: 'unit-53', unitName: 'Probation Service', role: 'editor' }] }
   ], addedAt: '2024-02-01', addedBy: 'Aoife Brennan' },
   
   { id: 'user-22', name: 'Orla Ní Chonaill', email: generateEmail('Orla', 'Ní Chonaill', 'health.gov.ie'), access: [
-    { departmentId: 'dept-3', departmentName: 'Health', fullDepartment: false, unitAccess: [{ unitId: 'unit-26', unitName: 'HSE Galway', role: 'editor' }, { unitId: 'unit-27', unitName: 'HSE Limerick', role: 'viewer' }] }
+    { teamId: 'team-3', teamName: 'Health', fullTeam: false, unitAccess: [{ unitId: 'unit-26', unitName: 'HSE Galway', role: 'editor' }, { unitId: 'unit-27', unitName: 'HSE Limerick', role: 'viewer' }] }
   ], addedAt: '2024-02-10', addedBy: 'Declan Walsh' },
   
   { id: 'user-23', name: 'Declan Mac Suibhne', email: generateEmail('Declan', 'Mac Suibhne', 'health.gov.ie'), access: [
-    { departmentId: 'dept-3', departmentName: 'Health', fullDepartment: false, unitAccess: [{ unitId: 'unit-28', unitName: 'HSE Waterford', role: 'admin' }] },
-    { departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', fullDepartment: false, unitAccess: [{ unitId: 'unit-6', unitName: 'Waterford City and County Council', role: 'viewer' }] }
+    { teamId: 'team-3', teamName: 'Health', fullTeam: false, unitAccess: [{ unitId: 'unit-28', unitName: 'HSE Waterford', role: 'admin' }] },
+    { teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', fullTeam: false, unitAccess: [{ unitId: 'unit-6', unitName: 'Waterford City and County Council', role: 'viewer' }] }
   ], addedAt: '2024-02-20', addedBy: 'Aoife Brennan' },
   
   { id: 'user-24', name: 'Clodagh Ní Fhearghail', email: generateEmail('Clodagh', 'Ní Fhearghail', 'health.gov.ie'), access: [
-    { departmentId: 'dept-3', departmentName: 'Health', fullDepartment: false, unitAccess: [{ unitId: 'unit-29', unitName: 'HSE Kerry', role: 'viewer' }, { unitId: 'unit-30', unitName: 'HSE Sligo', role: 'editor' }] }
+    { teamId: 'team-3', teamName: 'Health', fullTeam: false, unitAccess: [{ unitId: 'unit-29', unitName: 'HSE Kerry', role: 'viewer' }, { unitId: 'unit-30', unitName: 'HSE Sligo', role: 'editor' }] }
   ], addedAt: '2024-03-01', addedBy: 'Declan Walsh' },
   
   { id: 'user-25', name: 'Brendan Ó hEachthairn', email: generateEmail('Brendan', 'Ó hEachthairn', 'health.gov.ie'), access: [
-    { departmentId: 'dept-3', departmentName: 'Health', fullDepartment: false, unitAccess: [{ unitId: 'unit-31', unitName: 'HSE Donegal', role: 'editor' }] },
-    { departmentId: 'dept-4', departmentName: 'Social Protection', fullDepartment: false, unitAccess: [{ unitId: 'unit-44', unitName: 'Carers Section', role: 'admin' }, { unitId: 'unit-45', unitName: 'Maternity Benefit Section', role: 'viewer' }] }
+    { teamId: 'team-3', teamName: 'Health', fullTeam: false, unitAccess: [{ unitId: 'unit-31', unitName: 'HSE Donegal', role: 'editor' }] },
+    { teamId: 'team-4', teamName: 'Social Protection', fullTeam: false, unitAccess: [{ unitId: 'unit-44', unitName: 'Carers Section', role: 'admin' }, { unitId: 'unit-45', unitName: 'Maternity Benefit Section', role: 'viewer' }] }
   ], addedAt: '2024-03-10', addedBy: 'Aoife Brennan' },
   
   { id: 'user-26', name: 'Maeve Ní Bhraonáin', email: generateEmail('Maeve', 'Ní Bhraonáin', 'health.gov.ie'), access: [
-    { departmentId: 'dept-3', departmentName: 'Health', fullDepartment: false, unitAccess: [{ unitId: 'unit-32', unitName: 'HSE Mayo', role: 'admin' }] }
+    { teamId: 'team-3', teamName: 'Health', fullTeam: false, unitAccess: [{ unitId: 'unit-32', unitName: 'HSE Mayo', role: 'admin' }] }
   ], addedAt: '2024-03-15', addedBy: 'Declan Walsh' },
   
   { id: 'user-27', name: 'Cathal Mac Lochlainn', email: generateEmail('Cathal', 'Mac Lochlainn', 'health.gov.ie'), access: [
-    { departmentId: 'dept-3', departmentName: 'Health', fullDepartment: false, unitAccess: [{ unitId: 'unit-33', unitName: 'Mental Health Division', role: 'viewer' }, { unitId: 'unit-34', unitName: 'Primary Care Division', role: 'editor' }] },
-    { departmentId: 'dept-9', departmentName: 'Justice', fullDepartment: true, fullDepartmentRole: 'viewer', unitAccess: [] }
+    { teamId: 'team-3', teamName: 'Health', fullTeam: false, unitAccess: [{ unitId: 'unit-33', unitName: 'Mental Health Division', role: 'viewer' }, { unitId: 'unit-34', unitName: 'Primary Care Division', role: 'editor' }] },
+    { teamId: 'team-9', teamName: 'Justice', fullTeam: true, fullTeamRole: 'viewer', unitAccess: [] }
   ], addedAt: '2024-03-25', addedBy: 'Aoife Brennan' },
   
   { id: 'user-28', name: 'Eimear Ní Dhuibhir', email: generateEmail('Eimear', 'Ní Dhuibhir', 'health.gov.ie'), access: [
-    { departmentId: 'dept-3', departmentName: 'Health', fullDepartment: false, unitAccess: [{ unitId: 'unit-35', unitName: 'Acute Hospitals Division', role: 'admin' }] }
+    { teamId: 'team-3', teamName: 'Health', fullTeam: false, unitAccess: [{ unitId: 'unit-35', unitName: 'Acute Hospitals Division', role: 'admin' }] }
   ], addedAt: '2024-04-01', addedBy: 'Declan Walsh' },
   
   { id: 'user-29', name: 'Donal Ó Cathasaigh', email: generateEmail('Donal', 'Ó Cathasaigh', 'health.gov.ie'), access: [
-    { departmentId: 'dept-3', departmentName: 'Health', fullDepartment: false, unitAccess: [{ unitId: 'unit-36', unitName: 'Community Healthcare Division', role: 'editor' }] },
-    { departmentId: 'dept-2', departmentName: 'Education', fullDepartment: false, unitAccess: [{ unitId: 'unit-13', unitName: 'Primary Schools Division', role: 'viewer' }, { unitId: 'unit-14', unitName: 'Secondary Schools Division', role: 'viewer' }] }
+    { teamId: 'team-3', teamName: 'Health', fullTeam: false, unitAccess: [{ unitId: 'unit-36', unitName: 'Community Healthcare Division', role: 'editor' }] },
+    { teamId: 'team-2', teamName: 'Education', fullTeam: false, unitAccess: [{ unitId: 'unit-13', unitName: 'Primary Schools Division', role: 'viewer' }, { unitId: 'unit-14', unitName: 'Secondary Schools Division', role: 'viewer' }] }
   ], addedAt: '2024-04-05', addedBy: 'Aoife Brennan' },
   
   { id: 'user-30', name: 'Sorcha Ní Chonghaile', email: generateEmail('Sorcha', 'Ní Chonghaile', 'health.gov.ie'), access: [
-    { departmentId: 'dept-3', departmentName: 'Health', fullDepartment: false, unitAccess: [{ unitId: 'unit-37', unitName: 'National Ambulance Service', role: 'viewer' }] }
+    { teamId: 'team-3', teamName: 'Health', fullTeam: false, unitAccess: [{ unitId: 'unit-37', unitName: 'National Ambulance Service', role: 'viewer' }] }
   ], addedAt: '2024-04-10', addedBy: 'Declan Walsh' },
   
   // Social Protection users
   { id: 'user-31', name: 'Fergus Ó Briain', email: generateEmail('Fergus', 'Ó Briain', 'welfare.gov.ie'), access: [
-    { departmentId: 'dept-4', departmentName: 'Social Protection', fullDepartment: true, fullDepartmentRole: 'admin', unitAccess: [] }
+    { teamId: 'team-4', teamName: 'Social Protection', fullTeam: true, fullTeamRole: 'admin', unitAccess: [] }
   ], addedAt: '2024-01-25', addedBy: 'Declan Walsh' },
   
   { id: 'user-32', name: 'Deirdre Ní Dhomhnaill', email: generateEmail('Deirdre', 'Ní Dhomhnaill', 'welfare.gov.ie'), access: [
-    { departmentId: 'dept-4', departmentName: 'Social Protection', fullDepartment: false, unitAccess: [{ unitId: 'unit-38', unitName: 'Employment Services', role: 'editor' }, { unitId: 'unit-39', unitName: 'Community Welfare', role: 'viewer' }] },
-    { departmentId: 'dept-3', departmentName: 'Health', fullDepartment: false, unitAccess: [{ unitId: 'unit-33', unitName: 'Mental Health Division', role: 'editor' }] }
+    { teamId: 'team-4', teamName: 'Social Protection', fullTeam: false, unitAccess: [{ unitId: 'unit-38', unitName: 'Employment Services', role: 'editor' }, { unitId: 'unit-39', unitName: 'Community Welfare', role: 'viewer' }] },
+    { teamId: 'team-3', teamName: 'Health', fullTeam: false, unitAccess: [{ unitId: 'unit-33', unitName: 'Mental Health Division', role: 'editor' }] }
   ], addedAt: '2024-02-05', addedBy: 'Sinead Kelly' },
   
   { id: 'user-33', name: 'Colm Mac Carthaigh', email: generateEmail('Colm', 'Mac Carthaigh', 'welfare.gov.ie'), access: [
-    { departmentId: 'dept-4', departmentName: 'Social Protection', fullDepartment: false, unitAccess: [{ unitId: 'unit-40', unitName: 'Pensions Division', role: 'admin' }] }
+    { teamId: 'team-4', teamName: 'Social Protection', fullTeam: false, unitAccess: [{ unitId: 'unit-40', unitName: 'Pensions Division', role: 'admin' }] }
   ], addedAt: '2024-02-15', addedBy: 'Declan Walsh' },
   
   { id: 'user-34', name: 'Aisling Ní Suilleabháin', email: generateEmail('Aisling', 'Ní Suilleabháin', 'welfare.gov.ie'), access: [
-    { departmentId: 'dept-4', departmentName: 'Social Protection', fullDepartment: false, unitAccess: [{ unitId: 'unit-41', unitName: 'Child Benefit Section', role: 'editor' }, { unitId: 'unit-42', unitName: 'Disability Services', role: 'viewer' }] },
-    { departmentId: 'dept-2', departmentName: 'Education', fullDepartment: false, unitAccess: [{ unitId: 'unit-16', unitName: 'Special Education Division', role: 'viewer' }] },
-    { departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', fullDepartment: false, unitAccess: [{ unitId: 'unit-1', unitName: 'Cork City Council', role: 'viewer' }] }
+    { teamId: 'team-4', teamName: 'Social Protection', fullTeam: false, unitAccess: [{ unitId: 'unit-41', unitName: 'Child Benefit Section', role: 'editor' }, { unitId: 'unit-42', unitName: 'Disability Services', role: 'viewer' }] },
+    { teamId: 'team-2', teamName: 'Education', fullTeam: false, unitAccess: [{ unitId: 'unit-16', unitName: 'Special Education Division', role: 'viewer' }] },
+    { teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', fullTeam: false, unitAccess: [{ unitId: 'unit-1', unitName: 'Cork City Council', role: 'viewer' }] }
   ], addedAt: '2024-02-25', addedBy: 'Sinead Kelly' },
   
   { id: 'user-35', name: 'Ruairí Ó Néill', email: generateEmail('Ruairí', 'Ó Néill', 'welfare.gov.ie'), access: [
-    { departmentId: 'dept-4', departmentName: 'Social Protection', fullDepartment: false, unitAccess: [{ unitId: 'unit-43', unitName: 'Jobseeker Services', role: 'admin' }] }
+    { teamId: 'team-4', teamName: 'Social Protection', fullTeam: false, unitAccess: [{ unitId: 'unit-43', unitName: 'Jobseeker Services', role: 'admin' }] }
   ], addedAt: '2024-03-05', addedBy: 'Declan Walsh' },
   
   { id: 'user-36', name: 'Fionnuala Ní Riain', email: generateEmail('Fionnuala', 'Ní Riain', 'welfare.gov.ie'), access: [
-    { departmentId: 'dept-4', departmentName: 'Social Protection', fullDepartment: false, unitAccess: [{ unitId: 'unit-44', unitName: 'Carers Section', role: 'viewer' }] },
-    { departmentId: 'dept-3', departmentName: 'Health', fullDepartment: false, unitAccess: [{ unitId: 'unit-36', unitName: 'Community Healthcare Division', role: 'editor' }, { unitId: 'unit-37', unitName: 'National Ambulance Service', role: 'admin' }] }
+    { teamId: 'team-4', teamName: 'Social Protection', fullTeam: false, unitAccess: [{ unitId: 'unit-44', unitName: 'Carers Section', role: 'viewer' }] },
+    { teamId: 'team-3', teamName: 'Health', fullTeam: false, unitAccess: [{ unitId: 'unit-36', unitName: 'Community Healthcare Division', role: 'editor' }, { unitId: 'unit-37', unitName: 'National Ambulance Service', role: 'admin' }] }
   ], addedAt: '2024-03-15', addedBy: 'Sinead Kelly' },
   
   { id: 'user-37', name: 'Diarmuid Mac Giolla', email: generateEmail('Diarmuid', 'Mac Giolla', 'welfare.gov.ie'), access: [
-    { departmentId: 'dept-4', departmentName: 'Social Protection', fullDepartment: false, unitAccess: [{ unitId: 'unit-45', unitName: 'Maternity Benefit Section', role: 'editor' }, { unitId: 'unit-46', unitName: 'PRSI Records', role: 'admin' }] }
+    { teamId: 'team-4', teamName: 'Social Protection', fullTeam: false, unitAccess: [{ unitId: 'unit-45', unitName: 'Maternity Benefit Section', role: 'editor' }, { unitId: 'unit-46', unitName: 'PRSI Records', role: 'admin' }] }
   ], addedAt: '2024-03-25', addedBy: 'Declan Walsh' },
   
   { id: 'user-38', name: 'Meadhbh Ní Shé', email: generateEmail('Meadhbh', 'Ní Shé', 'welfare.gov.ie'), access: [
-    { departmentId: 'dept-4', departmentName: 'Social Protection', fullDepartment: false, unitAccess: [{ unitId: 'unit-47', unitName: 'Appeals Office', role: 'viewer' }] },
-    { departmentId: 'dept-9', departmentName: 'Justice', fullDepartment: false, unitAccess: [{ unitId: 'unit-52', unitName: 'Legal Aid Board', role: 'editor' }] }
+    { teamId: 'team-4', teamName: 'Social Protection', fullTeam: false, unitAccess: [{ unitId: 'unit-47', unitName: 'Appeals Office', role: 'viewer' }] },
+    { teamId: 'team-9', teamName: 'Justice', fullTeam: false, unitAccess: [{ unitId: 'unit-52', unitName: 'Legal Aid Board', role: 'editor' }] }
   ], addedAt: '2024-04-05', addedBy: 'Sinead Kelly' },
   
-  // Justice Department users
+  // Justice Team users
   { id: 'user-39', name: 'Tomás Ó Dónaill', email: generateEmail('Tomás', 'Ó Dónaill', 'justice.gov.ie'), access: [
-    { departmentId: 'dept-9', departmentName: 'Justice', fullDepartment: true, fullDepartmentRole: 'viewer', unitAccess: [] }
+    { teamId: 'team-9', teamName: 'Justice', fullTeam: true, fullTeamRole: 'viewer', unitAccess: [] }
   ], addedAt: '2024-01-15', addedBy: 'Marie O\'Sullivan' },
   
   { id: 'user-40', name: 'Bríd Ní Cheallaigh', email: generateEmail('Bríd', 'Ní Cheallaigh', 'justice.gov.ie'), access: [
-    { departmentId: 'dept-9', departmentName: 'Justice', fullDepartment: false, unitAccess: [{ unitId: 'unit-48', unitName: 'An Garda Síochána Liaison', role: 'editor' }, { unitId: 'unit-49', unitName: 'Irish Prison Service', role: 'admin' }] },
-    { departmentId: 'dept-4', departmentName: 'Social Protection', fullDepartment: false, unitAccess: [{ unitId: 'unit-43', unitName: 'Jobseeker Services', role: 'viewer' }] }
+    { teamId: 'team-9', teamName: 'Justice', fullTeam: false, unitAccess: [{ unitId: 'unit-48', unitName: 'An Garda Síochána Liaison', role: 'editor' }, { unitId: 'unit-49', unitName: 'Irish Prison Service', role: 'admin' }] },
+    { teamId: 'team-4', teamName: 'Social Protection', fullTeam: false, unitAccess: [{ unitId: 'unit-43', unitName: 'Jobseeker Services', role: 'viewer' }] }
   ], addedAt: '2024-02-01', addedBy: 'John Murphy' },
   
   { id: 'user-41', name: 'Seán Ó Murchú', email: generateEmail('Seán', 'Ó Murchú', 'justice.gov.ie'), access: [
-    { departmentId: 'dept-9', departmentName: 'Justice', fullDepartment: false, unitAccess: [{ unitId: 'unit-50', unitName: 'Courts Service', role: 'viewer' }] }
+    { teamId: 'team-9', teamName: 'Justice', fullTeam: false, unitAccess: [{ unitId: 'unit-50', unitName: 'Courts Service', role: 'viewer' }] }
   ], addedAt: '2024-02-15', addedBy: 'Marie O\'Sullivan' },
   
   { id: 'user-42', name: 'Aoife Ní Ghrádaigh', email: generateEmail('Aoife', 'Ní Ghrádaigh', 'justice.gov.ie'), access: [
-    { departmentId: 'dept-9', departmentName: 'Justice', fullDepartment: false, unitAccess: [{ unitId: 'unit-51', unitName: 'Immigration Service', role: 'editor' }, { unitId: 'unit-52', unitName: 'Legal Aid Board', role: 'viewer' }] },
-    { departmentId: 'dept-1', departmentName: 'Housing, Local Government and Heritage', fullDepartment: false, unitAccess: [{ unitId: 'unit-2', unitName: 'Dublin City Council', role: 'admin' }] },
-    { departmentId: 'dept-3', departmentName: 'Health', fullDepartment: false, unitAccess: [{ unitId: 'unit-51', unitName: 'Immigration Service', role: 'viewer' }] }
+    { teamId: 'team-9', teamName: 'Justice', fullTeam: false, unitAccess: [{ unitId: 'unit-51', unitName: 'Immigration Service', role: 'editor' }, { unitId: 'unit-52', unitName: 'Legal Aid Board', role: 'viewer' }] },
+    { teamId: 'team-1', teamName: 'Housing, Local Government and Heritage', fullTeam: false, unitAccess: [{ unitId: 'unit-2', unitName: 'Dublin City Council', role: 'admin' }] },
+    { teamId: 'team-3', teamName: 'Health', fullTeam: false, unitAccess: [{ unitId: 'unit-51', unitName: 'Immigration Service', role: 'viewer' }] }
   ], addedAt: '2024-03-01', addedBy: 'John Murphy' },
   
   { id: 'user-43', name: 'Ciarán Ó Flannagáin', email: generateEmail('Ciarán', 'Ó Flannagáin', 'justice.gov.ie'), access: [
-    { departmentId: 'dept-9', departmentName: 'Justice', fullDepartment: false, unitAccess: [{ unitId: 'unit-53', unitName: 'Probation Service', role: 'admin' }] }
+    { teamId: 'team-9', teamName: 'Justice', fullTeam: false, unitAccess: [{ unitId: 'unit-53', unitName: 'Probation Service', role: 'admin' }] }
   ], addedAt: '2024-03-15', addedBy: 'Marie O\'Sullivan' },
   
   { id: 'user-44', name: 'Niamh Ní Mhaoláin', email: generateEmail('Niamh', 'Ní Mhaoláin', 'justice.gov.ie'), access: [
-    { departmentId: 'dept-9', departmentName: 'Justice', fullDepartment: false, unitAccess: [{ unitId: 'unit-54', unitName: 'Data Protection Unit', role: 'viewer' }, { unitId: 'unit-55', unitName: 'Crime Policy Division', role: 'editor' }] },
-    { departmentId: 'dept-2', departmentName: 'Education', fullDepartment: true, fullDepartmentRole: 'viewer', unitAccess: [] }
+    { teamId: 'team-9', teamName: 'Justice', fullTeam: false, unitAccess: [{ unitId: 'unit-54', unitName: 'Data Protection Unit', role: 'viewer' }, { unitId: 'unit-55', unitName: 'Crime Policy Division', role: 'editor' }] },
+    { teamId: 'team-2', teamName: 'Education', fullTeam: true, fullTeamRole: 'viewer', unitAccess: [] }
   ], addedAt: '2024-04-01', addedBy: 'John Murphy' },
 ];
 
 export const users = addBuildingBlocksToUsers(usersWithAccess);
 
 // Helper functions
-export function getDepartmentById(id: string): Department | undefined {
-  return departments.find(d => d.id === id);
+export function getTeamById(id: string): Team | undefined {
+  return teams.find(d => d.id === id);
 }
 
-export function getUnitsByDepartmentId(departmentId: string): Unit[] {
-  return units.filter(u => u.departmentId === departmentId);
+export function getUnitsByTeamId(teamId: string): Unit[] {
+  return units.filter(u => u.teamId === teamId);
 }
 
-export function getUsersByDepartmentId(departmentId: string): User[] {
-  return users.filter(u => u.access.some(a => a.departmentId === departmentId));
+export function getUsersByTeamId(teamId: string): User[] {
+  return users.filter(u => u.access.some(a => a.teamId === teamId));
 }
 
 export function getUsersByUnitId(unitId: string): User[] {
@@ -516,12 +516,12 @@ export const admins: Admin[] = [
   { id: 'admin-6', name: 'Éanna Ó Faoláin', email: 'eanna.ofaolain@gov.ie', role: 'read_only', status: 'active', addedAt: '2024-04-01', addedBy: 'Marie O\'Sullivan' },
 ];
 
-// Allow listed domains with department associations
+// Allow listed domains with team associations
 export const allowListedDomains: AllowListedDomain[] = [
-  { id: 'wl-1', domain: 'housing.gov.ie', name: 'Housing Department', departmentIds: ['dept-1'], addedAt: '2024-01-10', addedBy: 'Marie O\'Sullivan' },
-  { id: 'wl-2', domain: 'education.gov.ie', name: 'Education Department', departmentIds: ['dept-2'], addedAt: '2024-01-08', addedBy: 'Marie O\'Sullivan' },
-  { id: 'wl-3', domain: 'health.gov.ie', name: 'Health Services', departmentIds: ['dept-3'], addedAt: '2024-01-05', addedBy: 'Aoife Brennan' },
-  { id: 'wl-4', domain: 'welfare.gov.ie', name: 'Social Welfare', departmentIds: ['dept-4'], addedAt: '2024-01-12', addedBy: 'Declan Walsh' },
-  { id: 'wl-5', domain: 'justice.gov.ie', name: 'Justice Department', departmentIds: ['dept-9'], addedAt: '2024-01-08', addedBy: 'Marie O\'Sullivan' },
-  { id: 'wl-6', domain: 'gov.ie', name: 'Government of Ireland', departmentIds: ['dept-1', 'dept-2', 'dept-3', 'dept-4', 'dept-5', 'dept-6', 'dept-7', 'dept-8', 'dept-9', 'dept-10'], addedAt: '2023-12-01', addedBy: 'Marie O\'Sullivan' },
+  { id: 'wl-1', domain: 'housing.gov.ie', name: 'Housing Team', teamIds: ['team-1'], addedAt: '2024-01-10', addedBy: 'Marie O\'Sullivan' },
+  { id: 'wl-2', domain: 'education.gov.ie', name: 'Education Team', teamIds: ['team-2'], addedAt: '2024-01-08', addedBy: 'Marie O\'Sullivan' },
+  { id: 'wl-3', domain: 'health.gov.ie', name: 'Health Services', teamIds: ['team-3'], addedAt: '2024-01-05', addedBy: 'Aoife Brennan' },
+  { id: 'wl-4', domain: 'welfare.gov.ie', name: 'Social Welfare', teamIds: ['team-4'], addedAt: '2024-01-12', addedBy: 'Declan Walsh' },
+  { id: 'wl-5', domain: 'justice.gov.ie', name: 'Justice Team', teamIds: ['team-9'], addedAt: '2024-01-08', addedBy: 'Marie O\'Sullivan' },
+  { id: 'wl-6', domain: 'gov.ie', name: 'Government of Ireland', teamIds: ['team-1', 'team-2', 'team-3', 'team-4', 'team-5', 'team-6', 'team-7', 'team-8', 'team-9', 'team-10'], addedAt: '2023-12-01', addedBy: 'Marie O\'Sullivan' },
 ];

@@ -19,7 +19,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - **React** 18.3.x, **React DOM** 18.3.x — functional components, hooks only.
 - **Vite** 5.4.x — build tool; `base: "/flow-wizard-15/"` in `vite.config.ts` (do not remove; required for GitHub Pages).
 - **TypeScript** 5.8.x — ESNext, `moduleResolution: "bundler"`, `strict: false`, path alias `@/*` → `./src/*`.
-- **React Router DOM** 6.30.x — `BrowserRouter` with **basename `/flow-wizard-15`**; all in-app navigation must use `<Link to="...">` or `<NavLink to="...">` (paths relative to basename, e.g. `/departments`, `/users`). Never use plain `<a href="...">` for app routes (causes full reloads and 404s on GitHub Pages).
+- **React Router DOM** 6.30.x — `BrowserRouter` with **basename `/flow-wizard-15`**; all in-app navigation must use `<Link to="...">` or `<NavLink to="...">` (paths relative to basename, e.g. `/teams`, `/users`). Never use plain `<a href="...">` for app routes (causes full reloads and 404s on GitHub Pages).
 - **Tailwind CSS** 3.4.x — utility-first; use `cn()` from `@/lib/utils` (clsx + tailwind-merge) for conditional classes.
 - **UI:** Radix UI primitives via shadcn-style components in `src/components/ui/`; **lucide-react** for icons.
 - **Forms:** react-hook-form 7.x, **Zod** 3.x, **@hookform/resolvers** for schema validation.
@@ -32,7 +32,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 
 ### Routing & navigation
 
-- **Always use React Router for in-app links.** Use `<Link to="...">` or `<NavLink to="...">` with paths relative to the app (e.g. `to="/departments"`, `to="/users"`). The router uses `basename="/flow-wizard-15"`; do not hardcode the basename in `to` props.
+- **Always use React Router for in-app links.** Use `<Link to="...">` or `<NavLink to="...">` with paths relative to the app (e.g. `to="/teams"`, `to="/users"`). The router uses `basename="/flow-wizard-15"`; do not hardcode the basename in `to` props.
 - **Do not use `<a href="...">` for internal routes.** It triggers a full page load and breaks on GitHub Pages (404 or wrong base path). Reserve `<a href>` for external URLs only (e.g. `https://...`).
 
 ### Imports and path alias
@@ -54,7 +54,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 
 ### File and naming conventions
 
-- **Components/pages:** PascalCase filenames (e.g. `DepartmentDetailPage.tsx`, `AppLayout.tsx`).
+- **Components/pages:** PascalCase filenames (e.g. `TeamDetailPage.tsx`, `AppLayout.tsx`).
 - **Hooks/utils:** camelCase (e.g. `use-toast.ts`, `utils.ts`).
 - **Structure:** route components in `src/pages/`, shared UI in `src/components/` (layout, ui, flows), shared logic in `src/contexts/`, `src/lib/`, `src/hooks/`.
 

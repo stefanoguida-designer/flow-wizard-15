@@ -39,7 +39,7 @@ const roleConfig = {
     description: 'View-only access across the platform. Cannot modify any data.',
     capabilities: [
       'View all users and permissions',
-      'View departments and units',
+      'View teams and units',
       'View allow list (read-only)',
       'Cannot invite or modify users',
       'View activity logs',
@@ -53,7 +53,7 @@ export default function RoleSelectionPage() {
 
   const handleSelectUser = (user: typeof simulatedUsers[0]) => {
     setCurrentUser(user);
-    navigate('/departments');
+    navigate('/teams');
   };
 
   return (

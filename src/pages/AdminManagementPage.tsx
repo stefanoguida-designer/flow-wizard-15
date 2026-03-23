@@ -110,7 +110,10 @@ export default function AdminManagementPage() {
   });
 
   const handleAddAdmin = () => {
-    if (!newAdminName.trim() || !newAdminEmail.trim()) return;
+    if (!newAdminName.trim() || !newAdminEmail.trim()) {
+      toast.error("Enter name and email");
+      return;
+    }
 
     if (adminList.some(a => a.email.toLowerCase() === newAdminEmail.toLowerCase())) {
       toast.error("An admin with this email already exists");

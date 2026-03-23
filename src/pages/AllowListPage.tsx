@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Navigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
-import { allowListedDomains, departments, type AllowListedDomain } from "@/lib/mockData";
+import { allowListedDomains, teams, type AllowListedDomain } from "@/lib/mockData";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,43 +51,46 @@ function DomainModal({
   domain?: AllowListedDomain; 
   isOpen: boolean; 
   onClose: () => void;
-  onSave: (data: { domain: string; name: string; departmentIds: string[] }) => void;
+  onSave: (data: { domain: string; name: string; teamIds: string[] }) => void;
   mode: 'add' | 'edit';
 }) {
   const [domainValue, setDomainValue] = useState(domain?.domain || "");
   const [nameValue, setNameValue] = useState(domain?.name || "");
-  const [selectedDepts, setSelectedDepts] = useState<Set<string>>(new Set(domain?.departmentIds || []));
+  const [selectedTeams, setSelectedTeams] = useState<Set<string>>(new Set(domain?.teamIds || []));
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredDepartments = useMemo(() => {
-    if (!searchQuery) return departments;
+  const filteredTeams = useMemo(() => {
+    if (!searchQuery) return teams;
     const query = searchQuery.toLowerCase();
-    return departments.filter(d => 
+    return teams.filter(d => 
       d.name.toLowerCase().includes(query) || 
       d.abbreviation.toLowerCase().includes(query)
     );
   }, [searchQuery]);
 
-  const toggleDepartment = (deptId: string) => {
-    const newDepts = new Set(selectedDepts);
-    if (newDepts.has(deptId)) {
-      newDepts.delete(deptId);
+  const toggleTeam = (teamId: string) => {
+    const next = new Set(selectedTeams);
+    if (next.has(teamId)) {
+      next.delete(teamId);
     } else {
-      newDepts.add(deptId);
+      next.add(teamId);
     }
-    setSelectedDepts(newDepts);
+    setSelectedTeams(next);
   };
 
   const handleSave = () => {
-    if (!domainValue.trim() || !nameValue.trim() || selectedDepts.size === 0) return;
+    if (!domainValue.trim() || !nameValue.trim() || selectedTeams.size === 0) {
+      toast.error("Add a valid domain, display name, and at least one team");
+      return;
+    }
     onSave({
       domain: domainValue.toLowerCase(),
       name: nameValue,
-      departmentIds: Array.from(selectedDepts)
+      teamIds: Array.from(selectedTeams)
     });
   };
 
-  const isValid = domainValue.includes('.') && nameValue.trim() && selectedDepts.size > 0;
+  const isValid = domainValue.includes('.') && nameValue.trim() && selectedTeams.size > 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -96,8 +99,8 @@ function DomainModal({
           <DialogTitle>{mode === 'add' ? 'Add Domain to Allow List' : 'Edit Domain'}</DialogTitle>
           <DialogDescription>
             {mode === 'add' 
-              ? 'Add a new email domain to allow users with that domain to be invited to specific departments.'
-              : 'Update the domain details and department associations.'}
+              ? 'Add a new email domain to allow users with that domain to be invited to specific teams.'
+              : 'Update the domain details and team associations.'}
           </DialogDescription>
         </DialogHeader>
         
@@ -107,7 +110,7 @@ function DomainModal({
               <Label htmlFor="domain-name">Domain Name</Label>
               <Input
                 id="domain-name"
-                placeholder="e.g., Housing Department"
+                placeholder="e.g., Housing Team"
                 value={nameValue}
                 onChange={(e) => setNameValue(e.target.value)}
               />
@@ -128,15 +131,15 @@ function DomainModal({
           </div>
 
           <div className="flex-1 min-h-0 space-y-3">
-            <Label className="flex-shrink-0">Department Access</Label>
+            <Label className="flex-shrink-0">Team access</Label>
             <p className="text-sm text-muted-foreground flex-shrink-0">
-              Select which departments users with this domain can be invited to.
+              Select which teams users with this domain can be invited to.
             </p>
             
             <div className="relative mb-2">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search departments..."
+                placeholder="Search teams..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -145,26 +148,26 @@ function DomainModal({
             
             <ScrollArea className="h-[200px] rounded-md border p-4">
               <div className="space-y-2">
-                {filteredDepartments.map((dept) => (
-                  <div key={dept.id} className="flex items-center space-x-2">
+                {filteredTeams.map((t) => (
+                  <div key={t.id} className="flex items-center space-x-2">
                     <Checkbox 
-                      id={`dept-${dept.id}`}
-                      checked={selectedDepts.has(dept.id)}
-                      onCheckedChange={() => toggleDepartment(dept.id)}
+                      id={`team-${t.id}`}
+                      checked={selectedTeams.has(t.id)}
+                      onCheckedChange={() => toggleTeam(t.id)}
                     />
                     <label 
-                      htmlFor={`dept-${dept.id}`}
+                      htmlFor={`team-${t.id}`}
                       className="text-sm cursor-pointer flex items-center gap-2"
                     >
                       <Building2 className="h-4 w-4 text-primary" />
-                      {dept.name}
-                      <span className="text-xs text-muted-foreground">({dept.abbreviation})</span>
+                      {t.name}
+                      <span className="text-xs text-muted-foreground">({t.abbreviation})</span>
                     </label>
                   </div>
                 ))}
-                {filteredDepartments.length === 0 && (
+                {filteredTeams.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-4">
-                    No departments match your search.
+                    No teams match your search.
                   </p>
                 )}
               </div>
@@ -207,14 +210,14 @@ export default function AllowListPage() {
     return "";
   });
 
-  const getDepartmentNames = (departmentIds: string[]) => {
-    return departmentIds
-      .map(id => departments.find(d => d.id === id))
+  const getTeamNames = (teamIds: string[]) => {
+    return teamIds
+      .map(id => teams.find(d => d.id === id))
       .filter(Boolean)
       .map(d => d!.abbreviation);
   };
 
-  const handleAddDomain = (data: { domain: string; name: string; departmentIds: string[] }) => {
+  const handleAddDomain = (data: { domain: string; name: string; teamIds: string[] }) => {
     if (domains.some(d => d.domain.toLowerCase() === data.domain.toLowerCase())) {
       toast.error("This domain is already in the allow list");
       return;
@@ -224,32 +227,39 @@ export default function AllowListPage() {
       id: `wl-${Date.now()}`,
       domain: data.domain,
       name: data.name,
-      departmentIds: data.departmentIds,
+      teamIds: data.teamIds,
       addedAt: new Date().toISOString().split('T')[0],
       addedBy: "Current Admin",
     };
 
     setDomains([...domains, newDomainEntry]);
     setIsAddOpen(false);
-    toast.success(`Domain "${data.domain}" added to allow list`);
+    toast.success("Domain added");
   };
 
-  const handleEditDomain = (data: { domain: string; name: string; departmentIds: string[] }) => {
+  const handleEditDomain = (data: { domain: string; name: string; teamIds: string[] }) => {
     if (!editingDomain) return;
     
     setDomains(domains.map(d => 
       d.id === editingDomain.id 
-        ? { ...d, name: data.name, departmentIds: data.departmentIds }
+        ? { ...d, name: data.name, teamIds: data.teamIds }
         : d
     ));
     setEditingDomain(null);
-    toast.success(`Domain "${data.domain}" updated`);
+    toast.success("Domain updated");
   };
 
   const handleRemoveDomain = (domain: AllowListedDomain) => {
-    setDomains(domains.filter(d => d.id !== domain.id));
+    setDomains((prev) => prev.filter((d) => d.id !== domain.id));
     setDomainToDelete(null);
-    toast.success(`Domain "${domain.domain}" removed from allow list`);
+    toast.success("Domain removed", {
+      action: {
+        label: "Undo",
+        onClick: () => {
+          setDomains((prev) => (prev.some((d) => d.id === domain.id) ? prev : [...prev, domain]));
+        },
+      },
+    });
   };
 
   return (
@@ -267,7 +277,7 @@ export default function AllowListPage() {
             <p className="text-sm text-muted-foreground mt-1">
               {isReadOnly 
                 ? 'You have read-only access to view allowed domains. Contact a Super Admin to make changes.'
-                : 'Only users with email addresses from allowed domains can be invited to the platform. Each domain is associated with specific departments that users can be granted access to.'}
+                : 'Only users with email addresses from allowed domains can be invited to the platform. Each domain is associated with specific teams that users can be granted access to.'}
             </p>
           </div>
         </div>
@@ -308,7 +318,7 @@ export default function AllowListPage() {
                 >
                   Name
                 </SortableTableHead>
-                <TableHead>Departments</TableHead>
+                <TableHead>Teams</TableHead>
                 <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -321,7 +331,7 @@ export default function AllowListPage() {
                 </TableRow>
               ) : (
                 sortedDomains.map((domain) => {
-                  const deptAbbrs = getDepartmentNames(domain.departmentIds);
+                  const deptAbbrs = getTeamNames(domain.teamIds);
                   return (
                     <TableRow key={domain.id}>
                       <TableCell>

@@ -12,10 +12,10 @@ interface PermissionRow {
 }
 
 const permissions: PermissionRow[] = [
-  { category: 'Departments', action: 'View departments and units', superAdmin: 'full', admin: 'full', readOnly: 'full' },
-  { category: 'Departments', action: 'Add new units', superAdmin: 'full', admin: 'full', readOnly: 'none' },
-  { category: 'Departments', action: 'Edit units', superAdmin: 'full', admin: 'full', readOnly: 'none' },
-  { category: 'Departments', action: 'Delete units', superAdmin: 'full', admin: 'none', readOnly: 'none' },
+  { category: 'Teams', action: 'View teams and units', superAdmin: 'full', admin: 'full', readOnly: 'full' },
+  { category: 'Teams', action: 'Add new units', superAdmin: 'full', admin: 'full', readOnly: 'none' },
+  { category: 'Teams', action: 'Edit units', superAdmin: 'full', admin: 'full', readOnly: 'none' },
+  { category: 'Teams', action: 'Delete units', superAdmin: 'full', admin: 'none', readOnly: 'none' },
   { category: 'Users', action: 'View users and permissions', superAdmin: 'full', admin: 'full', readOnly: 'full' },
   { category: 'Users', action: 'Invite users', superAdmin: 'full', admin: 'full', readOnly: 'none' },
   { category: 'Users', action: 'Edit user roles', superAdmin: 'full', admin: 'full', readOnly: 'none' },

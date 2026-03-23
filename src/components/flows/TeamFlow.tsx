@@ -2,23 +2,22 @@ import { FlowNode, FlowConnector, FlowBranch } from "@/components/FlowNode";
 import { FlowSection } from "@/components/FlowSection";
 import { Building2, Plus, Edit, Trash2, Check, X, AlertCircle } from "lucide-react";
 
-export function DepartmentFlow() {
+export function TeamFlow() {
   return (
     <FlowSection
-      title="Department Management Flow"
-      description="Create, edit, and delete government departments (Super Admin only)"
+      title="Team Management Flow"
+      description="Create, edit, and delete teams (Super Admin only)"
       icon={<Building2 className="w-5 h-5" />}
     >
       <div className="grid md:grid-cols-3 gap-8">
-        {/* Create Department */}
         <div className="flex flex-col items-center">
           <h4 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
-            <Plus className="w-4 h-4 text-primary" /> Create Department
+            <Plus className="w-4 h-4 text-primary" /> Create Team
           </h4>
           <FlowNode
             type="start"
-            title="Click 'Add Department'"
-            description="Departments page"
+            title="Click 'Add Team'"
+            description="Teams page"
             icon={<Plus className="w-4 h-4" />}
             delay={1}
             roleAccess={["super-admin"]}
@@ -62,15 +61,14 @@ export function DepartmentFlow() {
           </FlowBranch>
         </div>
 
-        {/* Edit Department */}
         <div className="flex flex-col items-center">
           <h4 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
-            <Edit className="w-4 h-4 text-primary" /> Edit Department
+            <Edit className="w-4 h-4 text-primary" /> Edit Team
           </h4>
           <FlowNode
             type="start"
             title="Click 'Edit'"
-            description="Department row"
+            description="Team row"
             icon={<Edit className="w-4 h-4" />}
             delay={1}
             roleAccess={["super-admin"]}
@@ -99,15 +97,14 @@ export function DepartmentFlow() {
           />
         </div>
 
-        {/* Delete Department */}
         <div className="flex flex-col items-center">
           <h4 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
-            <Trash2 className="w-4 h-4 text-destructive" /> Delete Department
+            <Trash2 className="w-4 h-4 text-destructive" /> Delete Team
           </h4>
           <FlowNode
             type="start"
             title="Click 'Delete'"
-            description="Department row"
+            description="Team row"
             icon={<Trash2 className="w-4 h-4" />}
             delay={1}
             roleAccess={["super-admin"]}
@@ -158,7 +155,7 @@ export function DepartmentFlow() {
         <p className="text-sm flex items-center gap-2">
           <AlertCircle className="w-4 h-4 text-destructive" />
           <span className="font-medium">Constraint:</span>
-          <span className="text-muted-foreground">Cannot delete department with existing units - must delete units first</span>
+          <span className="text-muted-foreground">Cannot delete a team with existing units — remove units first</span>
         </p>
       </div>
     </FlowSection>

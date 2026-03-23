@@ -2,7 +2,7 @@ import { Header } from "@/components/Header";
 import { RoleLegend } from "@/components/RoleLegend";
 import { AuthenticationFlow } from "@/components/flows/AuthenticationFlow";
 import { NavigationDiagram } from "@/components/flows/NavigationDiagram";
-import { DepartmentFlow } from "@/components/flows/DepartmentFlow";
+import { TeamFlow } from "@/components/flows/TeamFlow";
 import { UnitFlow } from "@/components/flows/UnitFlow";
 import { InviteUserFlow } from "@/components/flows/InviteUserFlow";
 import { UserManagementFlow } from "@/components/flows/UserManagementFlow";
@@ -34,7 +34,7 @@ const Index = () => {
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   This document outlines the complete user flows for the OGCIO Form Management Platform—an 
                   internal access control system designed to manage civil servants' access to form submissions 
-                  across government departments and their units.
+                  across government teams and their units.
                 </p>
               </div>
             </div>
@@ -43,7 +43,7 @@ const Index = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
               <StatCard 
                 icon={<Building2 className="w-4 h-4" />}
-                label="Departments"
+                label="Teams"
                 value="Hierarchical"
               />
               <StatCard 
@@ -77,7 +77,7 @@ const Index = () => {
             {[
               { metric: "User Onboarding", target: "< 2 min", desc: "Time from invite to active" },
               { metric: "Access Review", target: "< 30 sec", desc: "Time to verify permissions" },
-              { metric: "System Adoption", target: "100%", desc: "Departments using platform" },
+              { metric: "System Adoption", target: "100%", desc: "Teams using platform" },
               { metric: "Error Rate", target: "< 1%", desc: "Invalid invitations" },
             ].map((item, i) => (
               <div key={i} className="bg-card rounded-lg border border-border p-4">
@@ -106,7 +106,7 @@ const Index = () => {
           </div>
           
           <div className="animate-slide-in-bottom" style={{ animationDelay: "500ms" }}>
-            <DepartmentFlow />
+            <TeamFlow />
           </div>
           
           <div className="animate-slide-in-bottom" style={{ animationDelay: "600ms" }}>
