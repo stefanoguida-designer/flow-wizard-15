@@ -1412,16 +1412,26 @@ export default function UsersPage() {
         }
       }
 
-      // Unit filter
+      // Unit filter — include users with explicit unit access or whole-team access for that unit's team
       if (unitFilter !== "all") {
-        if (!user.access.some(a => a.unitAccess.some(ua => ua.unitId === unitFilter))) {
+        const unitMeta = units.find((u) => u.id === unitFilter);
+        const teamIdForUnit = unitMeta?.teamId;
+        const matchesUnitFilter = user.access.some((a) => {
+          const hasExplicitUnit = a.unitAccess.some((ua) => ua.unitId === unitFilter);
+          const hasWholeTeamForUnitsTeam =
+            Boolean(a.fullTeam) &&
+            teamIdForUnit !== undefined &&
+            a.teamId === teamIdForUnit;
+          return hasExplicitUnit || hasWholeTeamForUnitsTeam;
+        });
+        if (!matchesUnitFilter) {
           return false;
         }
       }
 
     return true;
     });
-  }, [searchQuery, teamFilter, unitFilter, userList]);
+  }, [searchQuery, teamFilter, unitFilter, userList, units]);
 
   const sortedUsers = useSorting(filteredUsers, sortKey, sortDirection, (user, key) => {
     if (key === "name") return user.name;
